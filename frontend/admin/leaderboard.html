@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin | Leaderboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="top-bar center">
+    <div class="health-bar">
+      <div class="health-fill" style="width:65%"></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="home.html">Home</a>
+    <a href="leaderboard.html">Leaderboard</a>
+    <a href="control.html">Control Panel</a>
+  </nav>
+
+  <div class="content">
+    <h2>Leaderboard</h2>
+
+    <!-- Filters -->
+    <div class="filters leaderboard-filters">
+      <select id="roleSelect">
+        <option>Citizen</option>
+        <option>Attacker</option>
+        <option>Authority</option>
+      </select>
+
+      <select id="roundSelect">
+        <option>Round 1</option>
+        <option>Round 2</option>
+      </select>
+
+      <button class="secondary-btn filter-btn" style="width: 100px;height: 50px; border-radius: 10px;" onclick="showLeaderboard()">
+        Go
+      </button>
+    </div>
+
+    <br>
+
+    <!-- Dummy leaderboard -->
+    <div id="leaderboardTable" class="card leaderboard-card">
+      <table class="leaderboard-table">
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Score</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>Player_Alpha</td>
+          <td>92</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Player_Beta</td>
+          <td>88</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Player_Gamma</td>
+          <td>81</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function showLeaderboard() {
+      document.getElementById("leaderboardTable").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
