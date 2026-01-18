@@ -1,5 +1,8 @@
-def calculate_task_score(slider1: float = 50.0, slider2: float = 50.0, slider3: float = 50.0) -> float:
-    
-    average_score = (slider1 + slider2 + slider3) / 3
-    
-    return round(average_score, 2)
+class TaskLogic:
+    @staticmethod
+    def calculate_average(v1: float, v2: float, v3: float) -> float:
+        """
+        Takes 3 floats and returns the average rounded to 3 decimals.
+        """
+        avg = (v1 + v2 + v3) / 3.0
+        return round(avg, 3)
