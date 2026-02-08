@@ -15,6 +15,16 @@ import InventoryManagement from "./pages/InventoryManagement";
 import PIDTuning from "./pages/PIDTuning";
 import Signup from "./pages/Signup";
 import HealthBarDemo from "./pages/HealthBarDemo";
+import Authority from "./pages/authority";
+import AttackerIndex from "./pages/attacker/Index";
+import AttackerGame from "./pages/attacker/Game";
+import AttackerPlay from "./pages/attacker/Play";
+import AttackerAimTrainer from "./pages/attacker/AimTrainer";
+import AttackerTypingTest from "./pages/attacker/TypingTest";
+import AttackerVisualMemory from "./pages/attacker/VisualMemory";
+import AttackerInventoryManagement from "./pages/attacker/InventoryManagement";
+import AttackerPIDTuning from "./pages/attacker/PIDTuning";
+import AttackerSignup from "./pages/attacker/Signup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +46,16 @@ export const App = () => (
           <Route path="/pid-tuning" element={<PIDTuning />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/health-demo" element={<HealthBarDemo />} />
+          <Route path="/authority" element={<Authority />} />
+          <Route path="/attacker" element={<AttackerIndex />} />
+          <Route path="/attacker/game" element={<AttackerGame />} />
+          <Route path="/attacker/play" element={<AttackerPlay />} />
+          <Route path="/attacker/aim-trainer" element={<AttackerAimTrainer />} />
+          <Route path="/attacker/typing-test" element={<AttackerTypingTest />} />
+          <Route path="/attacker/visual-memory" element={<AttackerVisualMemory />} />
+          <Route path="/attacker/inventory-management" element={<AttackerInventoryManagement />} />
+          <Route path="/attacker/pid-tuning" element={<AttackerPIDTuning />} />
+          <Route path="/attacker/signup" element={<AttackerSignup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
