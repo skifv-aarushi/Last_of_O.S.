@@ -1,0 +1,45 @@
+import "./global.css";
+
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import Game from "./pages/Game";
+import Play from "./pages/Play";
+import AimTrainer from "./pages/AimTrainer";
+import TypingTest from "./pages/TypingTest";
+import VisualMemory from "./pages/VisualMemory";
+import InventoryManagement from "./pages/InventoryManagement";
+import PIDTuning from "./pages/PIDTuning";
+import Signup from "./pages/Signup";
+import HealthBarDemo from "./pages/HealthBarDemo";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+export const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/play" element={<Play />} />
+          <Route path="/aim-trainer" element={<AimTrainer />} />
+          <Route path="/typing-test" element={<TypingTest />} />
+          <Route path="/visual-memory" element={<VisualMemory />} />
+          <Route path="/inventory-management" element={<InventoryManagement />} />
+          <Route path="/pid-tuning" element={<PIDTuning />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/health-demo" element={<HealthBarDemo />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
