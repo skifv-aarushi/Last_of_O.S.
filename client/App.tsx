@@ -18,6 +18,7 @@ import PersonalStats from "./pages/PersonalStats";
 import Signup from "./pages/Signup";
 import HealthBarDemo from "./pages/HealthBarDemo";
 import Authority from "./pages/authority";
+import Auditor from "./pages/auditor";
 import AttackerIndex from "./pages/attacker/Index";
 import AttackerGame from "./pages/attacker/Game";
 import AttackerPlay from "./pages/attacker/Play";
@@ -51,6 +52,7 @@ export const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/health-demo" element={<HealthBarDemo />} />
           <Route path="/authority" element={<Authority />} />
+          <Route path="/auditor" element={<Auditor />} />
           <Route path="/attacker" element={<AttackerIndex />} />
           <Route path="/attacker/game" element={<AttackerGame />} />
           <Route path="/attacker/play" element={<AttackerPlay />} />
