@@ -241,3 +241,26 @@
 .animate-audio-bar {
   animation: audio-bar ease-in-out infinite alternate;
 }
+
+/* Sigil warehouse custom scrollbar */
+.sigil-scroll {
+  scroll-behavior: smooth;
+}
+
+.sigil-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sigil-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(100, 100, 120, 0.3);
+}
+
+.sigil-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.35);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+}
+
+.sigil-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.55);
+}
