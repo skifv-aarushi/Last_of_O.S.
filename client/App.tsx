@@ -13,6 +13,8 @@ import TypingTest from "./pages/TypingTest";
 import VisualMemory from "./pages/VisualMemory";
 import InventoryManagement from "./pages/InventoryManagement";
 import PIDTuning from "./pages/PIDTuning";
+import UserInfo from "./pages/UserInfo";
+import PersonalStats from "./pages/PersonalStats";
 import Signup from "./pages/Signup";
 import HealthBarDemo from "./pages/HealthBarDemo";
 import Authority from "./pages/authority";
@@ -44,6 +46,8 @@ export const App = () => (
           <Route path="/visual-memory" element={<VisualMemory />} />
           <Route path="/inventory-management" element={<InventoryManagement />} />
           <Route path="/pid-tuning" element={<PIDTuning />} />
+          <Route path="/user-info" element={<UserInfo />} />
+          <Route path="/personal-stats" element={<PersonalStats />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/health-demo" element={<HealthBarDemo />} />
           <Route path="/authority" element={<Authority />} />

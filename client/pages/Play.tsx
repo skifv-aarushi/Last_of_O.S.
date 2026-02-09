@@ -15,25 +15,33 @@ export default function Play() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Random game selection with no repeats
+  // ─── Zone navigation handlers ───
+
+  // Task Bay – random game selection with no repeats
   const handlePortalEnter = useCallback(() => {
     const playedRaw = localStorage.getItem("playedGames");
     let played: string[] = playedRaw ? JSON.parse(playedRaw) : [];
 
-    // Filter out already-played games
     let available = ALL_GAMES.filter((g) => !played.includes(g));
-
-    // If all played, reset the pool
     if (available.length === 0) {
       played = [];
       available = [...ALL_GAMES];
     }
 
-    // Pick random from available
     const chosen = available[Math.floor(Math.random() * available.length)];
     played.push(chosen);
     localStorage.setItem("playedGames", JSON.stringify(played));
     navigate(chosen);
+  }, [navigate]);
+
+  // User Info machine
+  const handleUserInfoEnter = useCallback(() => {
+    navigate("/user-info");
+  }, [navigate]);
+
+  // Personal Stats machine
+  const handlePersonalStatsEnter = useCallback(() => {
+    navigate("/personal-stats");
   }, [navigate]);
 
   // Auth guard – redirect to login if not signed in
@@ -51,8 +59,6 @@ export default function Play() {
     const interval = setInterval(() => refreshToken(), 50 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
-
 
   // Read session from localStorage (set after login/join)
   const sessionId = localStorage.getItem("sessionId");
@@ -85,9 +91,16 @@ export default function Play() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227] flex flex-col">
-      {/* Top status bar – health (full width, above everything) */}
-      <div className="relative z-20 w-full shrink-0 h-[40px] sm:h-[48px] px-2 pt-2">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227]">
+      {/* Full-screen background */}
+      <img
+        src={labScene}
+        alt="Lab scene"
+        className="absolute inset-0 h-full w-full object-fill pixelated"
+      />
+
+      {/* Health bar – overlaid on top of background */}
+      <div className="absolute z-30 top-[40px] sm:top-[50px] left-[10px] sm:left-[20px] right-[10px] sm:right-[20px] h-[40px] sm:h-[48px] px-2">
         <HealthBar
           value={health}
           total={1000}
@@ -96,16 +109,15 @@ export default function Play() {
         />
       </div>
 
-      {/* Game area (below health bar) */}
-      <div className="relative flex-1">
-        <img
-          src={labScene}
-          alt="Lab scene"
-          className="absolute inset-0 h-full w-full object-cover pixelated"
-        />
+      {/* Game area (full viewport, character + hints) */}
+      <div className="relative w-full h-screen">
 
         {/* Civilian character – move with W A S D */}
-        <CivilianCharacter onPortalEnter={handlePortalEnter} />
+        <CivilianCharacter
+          onPortalEnter={handlePortalEnter}
+          onUserInfoEnter={handleUserInfoEnter}
+          onPersonalStatsEnter={handlePersonalStatsEnter}
+        />
 
         {/* WASD controls hint */}
         {showHint && (
@@ -125,5 +137,6 @@ export default function Play() {
         )}
       </div>
     </div>
+
   );
 }

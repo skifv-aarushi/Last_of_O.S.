@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Spritesheet: /civilian-spritesheet.png (853 × 1280)
@@ -25,24 +25,33 @@ const ANIM_INTERVAL = 200; // ms per walk frame
 const HB_W = 3; // % of viewport width
 const HB_H = 4; // % of viewport height
 
+// Spawn point – between User Info and Personal Stats machines
+const SPAWN = { x: 49.3, y: 37.7 };
+
 /**
- * Obstacle zones mapped from the user's red-marked screenshot.
- * Rectangles: { x1, y1, x2, y2 } in viewport-%.
- * The central portal uses an ellipse collision.
+ * Zones mapped from Figma image-map (1440×1024 → viewport %).
+ * Interactive zones trigger navigation; obstacles just block movement.
  */
 
-// Rectangular obstacles – tuned to allow paths around the portal
+// ─── Interactive zones (collision + navigation trigger) ───
+const ZONE_USER_INFO = { x1: 11.2, y1: 18.7, x2: 34.8, y2: 40.7 };
+const ZONE_PERSONAL_STATS = { x1: 63.8, y1: 19.1, x2: 89.2, y2: 42.8 };
+
+// Task Bay portal – circle → ellipse in viewport %
+const PORTAL = { cx: 49.7, cy: 56.9, rx: 9.9, ry: 13.9 };
+
+// ─── Pure obstacles (block movement, no navigation) ───
 const RECT_OBSTACLES = [
-  // Top wall / health bar
-  { x1: 0, y1: 0, x2: 100, y2: 8 },
-  // Left console/machine (upper-left)
-  { x1: 0, y1: 8, x2: 30, y2: 33 },
-  // Right console/panels + pipes (upper-right)
-  { x1: 64, y1: 8, x2: 100, y2: 28 },
-  // Left battery panels (shifted left + smaller to open left path)
-  { x1: 5, y1: 56, x2: 22, y2: 73 },
-  // Right battery panels (shifted right to open right path)
-  { x1: 80, y1: 56, x2: 97, y2: 73 },
+  // Top wall / ceiling (above machines)
+  { x1: 0, y1: 0, x2: 100, y2: 18.7 },
+  // Left wall (beside User Info machine)
+  { x1: 0, y1: 18.7, x2: 11.2, y2: 56 },
+  // Right wall (beside Personal Stats machine)
+  { x1: 89.2, y1: 18.7, x2: 100, y2: 56 },
+  // Obstacle 1 – left battery panels (Figma)
+  { x1: 9.0, y1: 55.9, x2: 24.7, y2: 69.2 },
+  // Obstacle 2 – right battery panels (Figma)
+  { x1: 75.1, y1: 56.2, x2: 90.7, y2: 70.8 },
   // Bottom-left pipes
   { x1: 0, y1: 80, x2: 12, y2: 100 },
   // Bottom-right pipes
@@ -51,80 +60,126 @@ const RECT_OBSTACLES = [
   { x1: 0, y1: 97, x2: 100, y2: 100 },
 ];
 
-// Central portal – tighter ellipse to allow walking around it
-const PORTAL = { cx: 50, cy: 55, rx: 17, ry: 17 };
+// ─── Collision helpers ───
 
-/** Check if a point (character centre) collides with any rectangular obstacle */
-function collidesRect(cx: number, cy: number): boolean {
-  const halfW = HB_W / 2;
-  const halfH = HB_H / 2;
+type Rect = { x1: number; y1: number; x2: number; y2: number };
 
+function hitsRect(cx: number, cy: number, r: Rect): boolean {
+  const hw = HB_W / 2;
+  const hh = HB_H / 2;
+  return cx + hw > r.x1 && cx - hw < r.x2 && cy + hh > r.y1 && cy - hh < r.y2;
+}
+
+function collidesObstacle(cx: number, cy: number): boolean {
   for (const ob of RECT_OBSTACLES) {
-    if (
-      cx + halfW > ob.x1 &&
-      cx - halfW < ob.x2 &&
-      cy + halfH > ob.y1 &&
-      cy - halfH < ob.y2
-    ) {
-      return true;
-    }
+    if (hitsRect(cx, cy, ob)) return true;
   }
-
   return false;
 }
 
-/** Check if a point is inside the portal ellipse */
 function insidePortal(cx: number, cy: number): boolean {
-  const halfW = HB_W / 2;
-  const halfH = HB_H / 2;
-  const edx = (cx - PORTAL.cx) / (PORTAL.rx + halfW);
-  const edy = (cy - PORTAL.cy) / (PORTAL.ry + halfH);
+  const hw = HB_W / 2;
+  const hh = HB_H / 2;
+  const edx = (cx - PORTAL.cx) / (PORTAL.rx + hw);
+  const edy = (cy - PORTAL.cy) / (PORTAL.ry + hh);
   return edx * edx + edy * edy < 1;
+}
+
+/** Returns true if pos is inside any interactive / portal zone */
+function collidesInteractive(cx: number, cy: number): boolean {
+  return (
+    hitsRect(cx, cy, ZONE_USER_INFO) ||
+    hitsRect(cx, cy, ZONE_PERSONAL_STATS) ||
+    insidePortal(cx, cy)
+  );
 }
 
 type Direction = "left" | "right";
 
 interface Props {
   onPortalEnter?: () => void;
+  onUserInfoEnter?: () => void;
+  onPersonalStatsEnter?: () => void;
 }
 
-export default function CivilianCharacter({ onPortalEnter }: Props) {
-  const [pos, setPos] = useState({ x: 50, y: 15 }); // start near the door (top-center corridor)
-  const [facing, setFacing] = useState<Direction>("right");
-  const facingRef = useRef<Direction>("right");
-  const [isMoving, setIsMoving] = useState(false);
-  const [walkFrame, setWalkFrame] = useState(0);
-  const keysRef = useRef<Set<string>>(new Set());
-  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
+/**
+ * Performance-optimised civilian character.
+ * All per-frame state lives in refs; the DOM is updated directly
+ * inside requestAnimationFrame so React never re-renders during movement.
+ */
+export default function CivilianCharacter({
+  onPortalEnter,
+  onUserInfoEnter,
+  onPersonalStatsEnter,
+}: Props) {
+  // DOM refs
+  const charRef = useRef<HTMLDivElement>(null);
+  const spriteRef = useRef<HTMLDivElement>(null);
 
-  // Key tracking
+  // Mutable state (never triggers re-render)
+  const posRef = useRef({ x: SPAWN.x, y: SPAWN.y });
+  const facingRef = useRef<Direction>("right");
+  const isMovingRef = useRef(false);
+  const walkFrameRef = useRef(0);
+  const lastAnimRef = useRef(0);
+  const keysRef = useRef<Set<string>>(new Set());
+
+  // One-shot trigger guards
+  const portalTriggeredRef = useRef(false);
+  const userInfoTriggeredRef = useRef(false);
+  const personalStatsTriggeredRef = useRef(false);
+
+  // Stable callback refs (avoids stale closures)
+  const cbPortal = useRef(onPortalEnter);
+  cbPortal.current = onPortalEnter;
+  const cbUserInfo = useRef(onUserInfoEnter);
+  cbUserInfo.current = onUserInfoEnter;
+  const cbPersonalStats = useRef(onPersonalStatsEnter);
+  cbPersonalStats.current = onPersonalStatsEnter;
+
+  // ─── Sprite helper (direct DOM, no state) ───
+  const applyFrame = (f: (typeof FRAMES)[keyof typeof FRAMES]) => {
+    const el = spriteRef.current;
+    if (!el) return;
+    const bsx = (853 / f.w) * 100;
+    const bsy = (1280 / f.h) * 100;
+    const bpx = (f.x / (853 - f.w)) * 100;
+    const bpy = (f.y / (1280 - f.h)) * 100;
+    el.style.backgroundSize = `${bsx}% ${bsy}%`;
+    el.style.backgroundPosition = `${bpx}% ${bpy}%`;
+  };
+
+  // ─── Key tracking ───
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (["w", "a", "s", "d"].includes(key)) {
+    const down = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      if (k === "w" || k === "a" || k === "s" || k === "d") {
         e.preventDefault();
-        keysRef.current.add(key);
+        keysRef.current.add(k);
       }
     };
-    const onKeyUp = (e: KeyboardEvent) => {
-      keysRef.current.delete(e.key.toLowerCase());
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
+    const up = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
     };
   }, []);
 
-  // Movement loop with collision
-  const portalTriggeredRef = useRef(false);
-  const onPortalEnterRef = useRef(onPortalEnter);
-  onPortalEnterRef.current = onPortalEnter;
-
+  // ─── Main game loop ───
   useEffect(() => {
     let raf: number;
-    const tick = () => {
+    let lastTime = 0;
+
+    // Set initial sprite
+    applyFrame(FRAMES.standing);
+
+    const tick = (now: number) => {
+      // Delta-time capped at 50 ms to prevent teleporting after tab-switch
+      const dt = lastTime === 0 ? 16.67 : Math.min(now - lastTime, 50);
+      lastTime = now;
+
       const keys = keysRef.current;
       let dx = 0;
       let dy = 0;
@@ -134,104 +189,99 @@ export default function CivilianCharacter({ onPortalEnter }: Props) {
       if (keys.has("s")) dy += 1;
 
       const moving = dx !== 0 || dy !== 0;
-      setIsMoving(moving);
 
-      if (dx < 0 && facingRef.current !== "left") {
-        facingRef.current = "left";
-        setFacing("left");
-      } else if (dx > 0 && facingRef.current !== "right") {
-        facingRef.current = "right";
-        setFacing("right");
-      }
+      // ── Facing ──
+      if (dx < 0) facingRef.current = "left";
+      else if (dx > 0) facingRef.current = "right";
 
       if (moving) {
         const len = Math.sqrt(dx * dx + dy * dy);
-        dx = (dx / len) * MOVE_SPEED * 0.15;
-        dy = (dy / len) * MOVE_SPEED * 0.15;
+        const speed = MOVE_SPEED * (dt / 16.67) * 0.15;
+        dx = (dx / len) * speed;
+        dy = (dy / len) * speed;
 
-        setPos((prev) => {
-          // Try full move
-          let nx = prev.x + dx;
-          let ny = prev.y + dy;
+        const prev = posRef.current;
+        let nx = Math.max(2, Math.min(98, prev.x + dx));
+        let ny = Math.max(5, Math.min(98, prev.y + dy));
 
-          // Clamp to viewport
-          nx = Math.max(2, Math.min(98, nx));
-          ny = Math.max(5, Math.min(98, ny));
-
-          // Check portal entry
-          if (insidePortal(nx, ny) && !portalTriggeredRef.current) {
-            portalTriggeredRef.current = true;
-            onPortalEnterRef.current?.();
-            return prev; // don't move into portal
+        // ── Interactive zone checks (trigger + block) ──
+        if (hitsRect(nx, ny, ZONE_USER_INFO) && !userInfoTriggeredRef.current) {
+          userInfoTriggeredRef.current = true;
+          cbUserInfo.current?.();
+          // block movement into the zone
+        } else if (
+          hitsRect(nx, ny, ZONE_PERSONAL_STATS) &&
+          !personalStatsTriggeredRef.current
+        ) {
+          personalStatsTriggeredRef.current = true;
+          cbPersonalStats.current?.();
+        } else if (insidePortal(nx, ny) && !portalTriggeredRef.current) {
+          portalTriggeredRef.current = true;
+          cbPortal.current?.();
+        } else if (!collidesObstacle(nx, ny) && !collidesInteractive(nx, ny)) {
+          // Free movement
+          posRef.current = { x: nx, y: ny };
+        } else {
+          // Blocked – try axis-aligned sliding
+          if (
+            !collidesObstacle(nx, prev.y) &&
+            !collidesInteractive(nx, prev.y)
+          ) {
+            posRef.current = { x: nx, y: prev.y };
+          } else if (
+            !collidesObstacle(prev.x, ny) &&
+            !collidesInteractive(prev.x, ny)
+          ) {
+            posRef.current = { x: prev.x, y: ny };
           }
+          // else: fully blocked, stay put
+        }
 
-          if (!collidesRect(nx, ny)) return { x: nx, y: ny };
+        // ── Update DOM directly (no React state) ──
+        const el = charRef.current;
+        if (el) {
+          el.style.left = `${posRef.current.x}%`;
+          el.style.top = `${posRef.current.y}%`;
+          el.style.transform = `translate(-50%, -50%) scaleX(${facingRef.current === "right" ? -1 : 1})`;
+        }
 
-          // Slide along X only
-          const slideX = { x: nx, y: prev.y };
-          if (!collidesRect(slideX.x, slideX.y) && !insidePortal(slideX.x, slideX.y)) return slideX;
-
-          // Slide along Y only
-          const slideY = { x: prev.x, y: ny };
-          if (!collidesRect(slideY.x, slideY.y) && !insidePortal(slideY.x, slideY.y)) return slideY;
-
-          // Blocked in both axes
-          return prev;
-        });
+        // ── Walk animation (frame-timed inside rAF) ──
+        if (now - lastAnimRef.current >= ANIM_INTERVAL) {
+          walkFrameRef.current = walkFrameRef.current === 0 ? 1 : 0;
+          lastAnimRef.current = now;
+          applyFrame(walkFrameRef.current === 0 ? FRAMES.walk1 : FRAMES.walk2);
+        }
+      } else if (isMovingRef.current) {
+        // Just stopped – reset to standing frame
+        applyFrame(FRAMES.standing);
       }
 
+      isMovingRef.current = moving;
       raf = requestAnimationFrame(tick);
     };
+
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Walk animation cycle
-  useEffect(() => {
-    if (isMoving) {
-      animRef.current = setInterval(() => {
-        setWalkFrame((f) => (f === 0 ? 1 : 0));
-      }, ANIM_INTERVAL);
-    } else {
-      if (animRef.current) clearInterval(animRef.current);
-      setWalkFrame(0);
-    }
-    return () => {
-      if (animRef.current) clearInterval(animRef.current);
-    };
-  }, [isMoving]);
-
-  // Pick the current frame data
-  const frame = isMoving
-    ? walkFrame === 0
-      ? FRAMES.walk1
-      : FRAMES.walk2
-    : FRAMES.standing;
-
-  // background-position and background-size to crop the spritesheet
-  const bgSizeX = (853 / frame.w) * 100;
-  const bgSizeY = (1280 / frame.h) * 100;
-  const bgPosX = (frame.x / (853 - frame.w)) * 100;
-  const bgPosY = (frame.y / (1280 - frame.h)) * 100;
 
   return (
     <div
+      ref={charRef}
       className="absolute z-20 pointer-events-none"
       style={{
-        left: `${pos.x}%`,
-        top: `${pos.y}%`,
+        left: `${SPAWN.x}%`,
+        top: `${SPAWN.y}%`,
         width: CHAR_W,
         height: CHAR_H,
-        transform: `translate(-50%, -50%) scaleX(${facing === "right" ? -1 : 1})`,
-        transition: "left 0.05s linear, top 0.05s linear",
+        transform: `translate(-50%, -50%) scaleX(-1)`,
       }}
     >
       <div
-        className="w-full h-full pixelated"
+        ref={spriteRef}
+        className="w-full h-full"
         style={{
           backgroundImage: `url(${SPRITE})`,
-          backgroundSize: `${bgSizeX}% ${bgSizeY}%`,
-          backgroundPosition: `${bgPosX}% ${bgPosY}%`,
           backgroundRepeat: "no-repeat",
           imageRendering: "pixelated",
         }}
