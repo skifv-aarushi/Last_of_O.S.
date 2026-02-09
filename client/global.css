@@ -287,3 +287,26 @@
 .sigil-scroll-orange::-webkit-scrollbar-thumb:hover {
   background: rgba(249, 115, 22, 0.55);
 }
+
+/* Sigil warehouse custom scrollbar – authority (green) */
+.sigil-scroll-green {
+  scroll-behavior: smooth;
+}
+
+.sigil-scroll-green::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sigil-scroll-green::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(100, 100, 120, 0.3);
+}
+
+.sigil-scroll-green::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 0, 0.35);
+  border: 1px solid rgba(0, 255, 0, 0.15);
+}
+
+.sigil-scroll-green::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 0, 0.55);
+}
