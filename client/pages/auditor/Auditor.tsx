@@ -1,55 +1,80 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-interface IOCReport {
+interface Citizen {
   id: number;
   name: string;
+  totalTasks: number;
+  icon: string;
+  onCooldown?: boolean;
+  cooldownUntil?: number;
+}
+
+interface Certificate {
+  id: number;
+  taskName: string;
   score: number;
-  status: "pending" | "approved" | "rejected";
-  iocIcon: string;
-  civilianId: string;
+  status: string;
+  author: string;
+  authority: string;
+  sigilIcon: string;
 }
 
 export default function Auditor() {
   const navigate = useNavigate();
 
-  // Sample data - replace with actual data from API/state
-  const [reports, setReports] = useState<IOCReport[]>([
-    { id: 1, name: "IOC-ALPHA", score: 87, status: "pending", iocIcon: "/auth_ioc.svg", civilianId: "CITIZEN-0001" },
-    { id: 2, name: "IOC-BETA", score: 92, status: "pending", iocIcon: "/auth_ioc.svg", civilianId: "CITIZEN-0002" },
-    { id: 3, name: "IOC-GAMMA", score: 78, status: "pending", iocIcon: "/auth_ioc.svg", civilianId: "CITIZEN-0003" },
-    { id: 4, name: "IOC-DELTA", score: 95, status: "pending", iocIcon: "/auth_ioc.svg", civilianId: "CITIZEN-0004" },
-    { id: 5, name: "IOC-EPSILON", score: 83, status: "pending", iocIcon: "/auth_ioc.svg", civilianId: "CITIZEN-0005" },
+  // Sample data for citizens/authorities (left panel)
+  const [citizens, setCitizens] = useState<Citizen[]>([
+    { id: 1, name: "[Citizen_001]", totalTasks: 24, icon: "/civillian_icon.svg", onCooldown: false },
+    { id: 2, name: "[Citizen_002]", totalTasks: 18, icon: "/civillian_icon.svg", onCooldown: false },
+    { id: 3, name: "[Citizen_003]", totalTasks: 15, icon: "/civillian_icon.svg", onCooldown: false },
+    { id: 4, name: "[Authority_001]", totalTasks: 42, icon: "/auth_icon.svg", onCooldown: false },
+    { id: 5, name: "[Citizen_004]", totalTasks: 12, icon: "/civillian_icon.svg", onCooldown: false },
+    { id: 6, name: "[Authority_002]", totalTasks: 42, icon: "/auth_icon.svg", onCooldown: false },
+    { id: 7, name: "[Citizen_005]", totalTasks: 12, icon: "/civillian_icon.svg", onCooldown: false },
+    { id: 8, name: "[Authority_003]", totalTasks: 42, icon: "/auth_icon.svg", onCooldown: false },
   ]);
 
-  const [selectedReport, setSelectedReport] = useState<IOCReport>(reports[0]);
+  // Sample certificates for selected citizen (grid on right top) - EXACTLY 6
+  const [certificates] = useState<Certificate[]>([
+    { id: 1, taskName: "PID", score: 95, status: "Approved", author: "[Name]", authority: "[Authority_ID]", sigilIcon: "/sigil_1.svg" },
+    { id: 2, taskName: "AIM", score: 87, status: "Approved", author: "[Name]", authority: "[Authority_ID]", sigilIcon: "/sigil_2.svg" },
+    { id: 3, taskName: "TYPING", score: 92, status: "Approved", author: "[Name]", authority: "[Authority_ID]", sigilIcon: "/sigil_3.svg" },
+    { id: 4, taskName: "MEMORY", score: 88, status: "Pending", author: "[Name]", authority: "[Authority_ID]", sigilIcon: "/sigil_4.svg" },
+    { id: 5, taskName: "INVENTORY", score: 91, status: "Approved", author: "[Name]", authority: "[Authority_ID]", sigilIcon: "/sigil_5.svg" },
+    { id: 6, taskName: "PID", score: 89, status: "Approved", author: "[Name]", authority: "[Authority_ID]", sigilIcon: "/sigil_1.svg" },
+  ]);
+
+  const [selectedCitizen, setSelectedCitizen] = useState<Citizen>(citizens[0]);
+  const [selectedCertificate, setSelectedCertificate] = useState<Certificate>(certificates[0]);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [decision, setDecision] = useState<"approved" | "rejected" | null>(null);
 
-  const handleApprove = () => {
-    console.log("Approved:", selectedReport);
-    // Update the report status
-    setReports(reports.map(report =>
-      report.id === selectedReport.id ? { ...report, status: "approved" } : report
-    ));
-    setDecision("approved");
+  const handleCooldown = () => {
     setShowConfirmation(true);
   };
 
-  const handleReject = () => {
-    console.log("Rejected:", selectedReport);
-    // Update the report status
-    setReports(reports.map(report =>
-      report.id === selectedReport.id ? { ...report, status: "rejected" } : report
+  const handleConfirmCooldown = () => {
+    // Set cooldown for 5 minutes
+    const cooldownTime = Date.now() + 5 * 60 * 1000;
+    setCitizens(citizens.map(citizen =>
+      citizen.id === selectedCitizen.id
+        ? { ...citizen, onCooldown: true, cooldownUntil: cooldownTime }
+        : citizen
     ));
-    setDecision("rejected");
-    setShowConfirmation(true);
-  };
-
-  const handleContinue = () => {
     setShowConfirmation(false);
-    setDecision(null);
-    // Optionally navigate to next report or refresh
+
+    // Auto-remove cooldown after 5 minutes
+    setTimeout(() => {
+      setCitizens(prev => prev.map(citizen =>
+        citizen.id === selectedCitizen.id
+          ? { ...citizen, onCooldown: false, cooldownUntil: undefined }
+          : citizen
+      ));
+    }, 5 * 60 * 1000);
+  };
+
+  const handleCancelCooldown = () => {
+    setShowConfirmation(false);
   };
 
   return (
@@ -57,7 +82,7 @@ export default function Auditor() {
       className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] select-none"
       style={{ fontFamily: "'Jura', sans-serif" }}
     >
-      {/* Background image (audit room) */}
+      {/* Background image */}
       <div
         className="absolute inset-0 w-full h-full"
         style={{
@@ -78,157 +103,197 @@ export default function Auditor() {
       >
         ← EXIT
       </button>
-
+        
       {/* Main content */}
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-start p-8 pt-24">
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-start p-8 pt-16">
         {/* Title */}
-        <h1 className="font-bold text-2xl sm:text-3xl uppercase tracking-wider mb-12">
+        <h1 className="font-bold text-2xl uppercase tracking-wider mb-8">
           <span className="text-white">LOCATION : </span>
-          <span className="text-[#a855f7]" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>AUDIT CHAMBER</span>
+          <span className="text-[#a855f7]" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>SIGIL WAREHOUSE</span>
         </h1>
-
-        {/* Main layout - two sections */}
-        <div className="flex items-start justify-center gap-8 w-full max-w-7xl">
-          {/* Left section: History of IOC Reports */}
-          <div className="relative flex-1 max-w-xl">
+        <div className="h-[50px] shrink-0" />
+        {/* Main layout */}
+        <div className="flex items-start justify-center gap-8 w-full max-w-[1400px]">
+          {/* Left panel: RECORDS OF THE O.S. */}
+          <div className="relative w-[380px]">
             {/* Corner brackets */}
-            <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-white/30" />
-            <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-white/30" />
-            <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-white/30" />
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-white/30" />
+            <div className="absolute -top-2 -left-2 w-6 h-6 border-t-2 border-l-2 border-white/30" />
+            <div className="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-white/30" />
+            <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-white/30" />
+            <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-white/30" />
 
             <div className="bg-black/40 border border-white/20 p-6">
-              <h2 className="font-bold text-xl uppercase text-white mb-6 tracking-wide">
-                HISTORY OF IOC REPORTS
+              <h2 className="font-bold text-base uppercase text-white mb-6 tracking-wide">
+                RECORDS OF THE O.S.
               </h2>
 
-              {/* Reports list */}
+              {/* Citizens list */}
               <div className="space-y-3">
-                {reports.map((report) => {
-                  const getReportStyle = () => {
-                    if (report.status === "approved") {
-                      return "border-[#a855f7] bg-[#a855f7]/20";
-                    } else if (report.status === "rejected") {
-                      return "border-[#ff6b6b] bg-[#ff6b6b]/20";
-                    } else if (selectedReport.id === report.id) {
-                      return "border-[#a855f7] bg-[#a855f7]/10";
-                    }
-                    return "border-white/20 bg-black/30 hover:bg-black/50";
-                  };
+                {citizens.map((citizen) => {
+                  const isSelected = selectedCitizen.id === citizen.id;
 
                   return (
-                  <button
-                    key={report.id}
-                    onClick={() => setSelectedReport(report)}
-                    className={`w-full flex items-center gap-4 p-4 border transition-all ${getReportStyle()}`}
-                  >
-                    {/* IOC icon */}
-                    <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center border border-[#a855f7]/40 rounded bg-black/50">
-                      <img
-                        src={report.iocIcon}
-                        alt={`IOC ${report.id}`}
-                        className="w-12 h-12 object-contain"
-                        style={{ filter: "brightness(0) saturate(100%) invert(60%) sepia(77%) saturate(3098%) hue-rotate(240deg) brightness(100%) contrast(96%)" }}
-                      />
-                    </div>
+                    <button
+                      key={citizen.id}
+                      onClick={() => setSelectedCitizen(citizen)}
+                      className={`w-full flex items-center gap-3 p-3 border transition-all ${
+                        isSelected ? "border-[#a855f7] bg-[#a855f7]/10" : "border-white/20 bg-black/30 hover:bg-black/50"
+                      } ${citizen.onCooldown ? "opacity-40" : ""}`}
+                    >
+                      {/* Icon */}
+                      <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center border border-[#a855f7]/40 rounded bg-black/50">
+                        <img
+                          src={citizen.icon}
+                          alt={citizen.name}
+                          className="w-8 h-8 object-contain"
+                          style={{
+                            filter: citizen.icon.includes('civillian')
+                              ? "none"
+                              : "brightness(0) saturate(100%) invert(60%) sepia(77%) saturate(3098%) hue-rotate(240deg) brightness(100%) contrast(96%)"
+                          }}
+                        />
+                      </div>
 
-                    {/* Report info - show on all reports */}
-                    <div className="flex-1 text-left">
-                      <p className="font-bold text-sm uppercase">
-                        <span className="text-white">REPORT: </span>
-                        <span className="text-[#a855f7]">{report.name}</span>
-                      </p>
-                      <p className="font-bold text-sm uppercase mt-1">
-                        <span className="text-white">SCORE: </span>
-                        <span className="text-[#a855f7]">{report.score}</span>
-                      </p>
-                      {report.status !== "pending" && (
-                        <p className={`font-bold text-xs uppercase mt-2 ${
-                          report.status === "approved" ? "text-[#a855f7]" : "text-[#ff6b6b]"
-                        }`}>
-                          {report.status === "approved" ? "✓ APPROVED" : "✗ REJECTED"}
+                      {/* Info */}
+                      <div className="flex-1 text-left">
+                        <p className="font-bold text-[11px] uppercase leading-tight">
+                          <span className="text-white">NAME : </span>
+                          <span className="text-[#a855f7]">{citizen.name}</span>
                         </p>
-                      )}
-                    </div>
-                  </button>
+                        <p className="font-bold text-[11px] uppercase leading-tight mt-1">
+                          <span className="text-white">TOTAL TASKS : </span>
+                          <span className="text-[#a855f7]">{citizen.totalTasks}</span>
+                        </p>
+                      </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
           </div>
 
-          {/* Right section: Report Details */}
-          <div className="relative flex-1 max-w-md">
-            {/* Corner brackets */}
-            <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-white/30" />
-            <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-white/30" />
-            <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-white/30" />
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-white/30" />
+          {/* Right section: Two panels */}
+          <div className="flex flex-col gap-6 w-[700px]">
+            {/* Top panel: ACTIVITY RECORD */}
+            <div className="relative">
+              {/* Corner brackets */}
+              <div className="absolute -top-2 -left-2 w-6 h-6 border-t-2 border-l-2 border-white/30" />
+              <div className="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-white/30" />
+              <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-white/30" />
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-white/30" />
 
-            <div className="bg-black/40 border border-white/20 p-8 max-h-[600px] overflow-y-auto">
-              <h2 className="font-bold text-xl uppercase text-[#a855f7] mb-8 text-center tracking-wide" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>
-                IOC REPORT DETAILS
-              </h2>
+              <div className="bg-black/40 border border-white/20 p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="font-bold text-base uppercase tracking-wide">
+                    <span className="text-white">ACTIVITY </span>
+                    <span className="text-[#a855f7]" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>RECORD</span>
+                  </h2>
 
-              {/* Selected report details */}
-              <div className="space-y-6">
-                {/* IOC icon - larger */}
-                <div className="flex justify-center mb-8">
-                  <div className="w-32 h-32 flex items-center justify-center border-2 border-[#a855f7]/40 rounded bg-black/50">
-                    <img
-                      src={selectedReport.iocIcon}
-                      alt="Selected IOC"
-                      className="w-24 h-24 object-contain"
-                      style={{ filter: "brightness(0) saturate(100%) invert(60%) sepia(77%) saturate(3098%) hue-rotate(240deg) brightness(100%) contrast(96%)" }}
-                    />
+                  {/* User info */}
+                  <div className="flex gap-8 text-[11px]">
+                    <span className="text-white">Name : <span className="text-[#a855f7]">{selectedCitizen.name}</span></span>
+                    <span className="text-white">Class : <span className="text-[#a855f7]">Citizen</span></span>
                   </div>
                 </div>
 
-                {/* Report details */}
-                <div className="space-y-4">
-                  <p className="font-bold text-lg uppercase">
-                    <span className="text-white">Report Name : </span>
-                    <span className="text-[#a855f7]">{selectedReport.name}</span>
-                  </p>
+                {/* Certificates grid - 2x3 */}
+                <div className="grid grid-cols-3 gap-4">
+                  {certificates.map((cert) => {
+                    const isSelected = selectedCertificate.id === cert.id;
+                    return (
+                      <button
+                        key={cert.id}
+                        onClick={() => setSelectedCertificate(cert)}
+                        className={`w-[200px] h-[200px] shrink-0 flex flex-col items-center justify-center border-2 bg-black/50 transition-all hover:bg-black/70 p-4 ${
+                          isSelected ? "border-[#b484e0]" : "border-[#0a0a0a]/40"
+                        }`}
+                      >
+                        <img
+                          src={cert.sigilIcon}
+                          alt={cert.taskName}
+                          className="w-20 h-20 object-contain mb-3" // Increased icon size slightly to match the larger box
+                          style={{ filter: "brightness(0) saturate(100%) invert(60%) sepia(77%) saturate(3098%) hue-rotate(240deg) brightness(100%) contrast(96%)" }}
+                        />
+                        <span className="font-bold text-xs uppercase text-white leading-none">
+                          Task : <span className="text-[#a855f7]">{cert.taskName}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
-                  {/* Civilian info with icon */}
-                  <div className="font-bold text-lg uppercase flex items-center gap-3">
-                    <span className="text-white">Civilian : </span>
-                    <div className="flex items-center gap-2">
+            {/* Bottom panel: SIGIL OF PROOF */}
+            <div className="h-[3px] shrink-0" />
+            <div className="relative">
+              {/* Corner brackets */}
+              <div className="absolute -top-2 -left-2 w-6 h-6 border-t-2 border-l-2 border-white/30" />
+              <div className="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-white/30" />
+              <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-white/30" />
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-white/30" />
+
+              <div className="bg-black/40 border border-white/20 p-6">
+                <h2 className="font-bold text-base uppercase text-[#a855f7] mb-6 text-center tracking-wide" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>
+                  SIGIL OF PROOF
+                </h2>
+
+                <div className="flex items-start gap-10 h-[110px] shrink-0">
+                  {/* Sigil icon with corner brackets */}
+                  <div className="relative flex-shrink-0">
+                    <div className="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-[#a855f7]/60" />
+                    <div className="absolute -top-1 -right-1 w-3 h-3 border-t border-r border-[#a855f7]/60" />
+                    <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b border-l border-[#a855f7]/60" />
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-[#a855f7]/60" />
+
+                    <div className="w-28 h-28 flex items-center justify-center bg-black/30">
                       <img
-                        src="/civillian_icon.png"
-                        alt="Civilian"
-                        className="w-6 h-6 object-contain"
+                        src={selectedCertificate.sigilIcon}
+                        alt="Sigil"
+                        className="w-20 h-20 object-contain"
+                        style={{ filter: "brightness(0) saturate(100%) invert(60%) sepia(77%) saturate(3098%) hue-rotate(240deg) brightness(100%) contrast(96%)" }}
                       />
-                      <span className="text-[#a855f7]">{selectedReport.civilianId}</span>
                     </div>
                   </div>
 
-                  <p className="font-bold text-lg uppercase">
-                    <span className="text-white">Score : </span>
-                    <span className="text-[#a855f7]">{selectedReport.score}</span>
-                  </p>
-                  <p className="font-bold text-lg uppercase">
-                    <span className="text-white">Status : </span>
-                    <span className="text-[#a855f7] capitalize">{selectedReport.status}</span>
-                  </p>
-                </div>
+                  {/* Certificate details */}
+                  <div className="flex-1 space-y-2">
+                    <p className="font-bold text-[11px] uppercase leading-tight">
+                      <span className="text-white">Name : </span>
+                      <span className="text-[#a855f7]">{selectedCertificate.taskName}</span>
+                    </p>
+                    <p className="font-bold text-[11px] uppercase leading-tight">
+                      <span className="text-white">Score : </span>
+                      <span className="text-[#a855f7]">{selectedCertificate.score}</span>
+                    </p>
+                    <p className="font-bold text-[11px] uppercase leading-tight">
+                      <span className="text-white">Status : </span>
+                      <span className="text-[#a855f7]">{selectedCertificate.status}</span>
+                    </p>
+                    <p className="font-bold text-[11px] uppercase leading-tight">
+                      <span className="text-white">Author : </span>
+                      <span className="text-[#a855f7]">{selectedCertificate.author}</span>
+                    </p>
+                    <p className="font-bold text-[11px] uppercase leading-tight">
+                      <span className="text-white">Authority : </span>
+                      <span className="text-[#a855f7]">{selectedCertificate.authority}</span>
+                    </p>
+                  </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-4 mt-8 pt-8 border-t border-white/20">
-                  <button
-                    onClick={handleReject}
-                    className="flex-1 px-6 py-3 border-2 border-[#8b4513] bg-[#8b4513]/20 text-[#ff6b6b] font-bold text-sm uppercase hover:bg-[#8b4513]/40 transition-colors"
-                  >
-                    REJECT
-                  </button>
-                  <button
-                    onClick={handleApprove}
-                    className="flex-1 px-6 py-3 border-2 border-[#a855f7] bg-[#a855f7]/20 text-[#a855f7] font-bold text-sm uppercase hover:bg-[#a855f7]/30 transition-colors"
-                    style={{ boxShadow: '0 0 15px rgba(168,85,247,0.2)' }}
-                  >
-                    APPROVE
-                  </button>
+                  {/* Cooldown button */}
+                  <div className="flex-shrink-0 flex items-end">
+                    <button
+                      onClick={handleCooldown}
+                      disabled={selectedCitizen.onCooldown}
+                      className={`px-6 py-2.5 border-2 font-bold text-xs uppercase transition-colors ${
+                        selectedCitizen.onCooldown
+                          ? "border-white/20 bg-black/30 text-white/30 cursor-not-allowed"
+                          : "border-[#a855f7] bg-black/50 text-[#a855f7] hover:bg-[#a855f7]/20"
+                      }`}
+                    >
+                      {selectedCitizen.onCooldown ? "WAIT" : "COOLDOWN"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -239,7 +304,7 @@ export default function Auditor() {
       {/* Confirmation Screen */}
       {showConfirmation && (
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 pointer-events-auto animate-fade-in"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 animate-fade-in"
           style={{ fontFamily: "'Jura', sans-serif" }}
         >
           <div
@@ -251,45 +316,41 @@ export default function Auditor() {
           <div className="absolute top-[70%] left-0 right-0 h-px bg-[#a855f7]/20" />
 
           <p className="text-[#a855f7]/60 text-xs uppercase tracking-[0.3em] mb-6">
-            // DECISION RECORDED
+            // COOLDOWN CONFIRMATION
           </p>
 
           <h2 className="font-bold text-2xl sm:text-3xl text-[#a855f7] uppercase tracking-widest mb-3" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>
-            IOC REPORT {decision === "approved" ? "APPROVED" : "REJECTED"}
+            INITIATE COOLDOWN
           </h2>
 
           <div className="flex gap-8 sm:gap-12 my-6">
             <div className="text-center">
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">REPORT</p>
-              <p className="font-bold text-3xl sm:text-4xl text-[#a855f7]">{selectedReport.name}</p>
+              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">CITIZEN</p>
+              <p className="font-bold text-2xl sm:text-3xl text-[#a855f7]">{selectedCitizen.name}</p>
             </div>
             <div className="text-center">
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">SCORE</p>
-              <p className="font-bold text-3xl sm:text-4xl text-[#a855f7]">{selectedReport.score}</p>
+              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">DURATION</p>
+              <p className="font-bold text-2xl sm:text-3xl text-[#a855f7]">5 MINS</p>
             </div>
           </div>
 
-          <div className={`px-6 py-3 border-2 mb-8 ${
-            decision === "approved"
-              ? "border-[#a855f7] bg-[#a855f7]/10 text-[#a855f7]"
-              : "border-[#ff6b6b] bg-[#ff6b6b]/10 text-[#ff6b6b]"
-          } font-bold text-lg uppercase`}>
-            STATUS: {decision === "approved" ? "APPROVED" : "REJECTED"}
-          </div>
+          <p className="text-white/50 text-sm uppercase tracking-wider mb-8 max-w-md text-center">
+            This citizen will be greyed out and unavailable for 5 minutes
+          </p>
 
           <div className="flex gap-4">
             <button
-              onClick={handleContinue}
+              onClick={handleConfirmCooldown}
               className="px-8 py-3 border-2 border-[#a855f7] text-[#a855f7] font-bold text-sm uppercase tracking-wider hover:bg-[#a855f7]/20 transition-colors"
               style={{ boxShadow: '0 0 15px rgba(168,85,247,0.2)' }}
             >
-              CONTINUE
+              CONFIRM
             </button>
             <button
-              onClick={() => navigate("/play")}
+              onClick={handleCancelCooldown}
               className="px-8 py-3 border-2 border-white/30 text-white/70 font-bold text-sm uppercase tracking-wider hover:bg-white/10 transition-colors"
             >
-              RETURN TO BASE
+              CANCEL
             </button>
           </div>
         </div>
