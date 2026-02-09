@@ -83,7 +83,7 @@ export default function Authority() {
         {/* Title */}
         <h1 className="font-bold text-2xl sm:text-3xl uppercase tracking-wider mb-12">
           <span className="text-white">LOCATION : </span>
-          <span className="text-[#00ff00]">SIGIL WAREHOUSE</span>
+          <span className="text-[#00ff00]" style={{ textShadow: '0 0 20px rgba(0,255,0,0.5)' }}>SIGIL WAREHOUSE</span>
         </h1>
 
         {/* Main layout - two sections */}
@@ -165,7 +165,7 @@ export default function Authority() {
             <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-white/30" />
 
             <div className="bg-black/40 border border-white/20 p-8 max-h-[600px] overflow-y-auto">
-              <h2 className="font-bold text-xl uppercase text-[#00ff00] mb-8 text-center tracking-wide">
+              <h2 className="font-bold text-xl uppercase text-[#00ff00] mb-8 text-center tracking-wide" style={{ textShadow: '0 0 20px rgba(0,255,0,0.5)' }}>
                 SIGIL OF PROOF
               </h2>
 
@@ -214,6 +214,7 @@ export default function Authority() {
                   <button
                     onClick={handleApprove}
                     className="flex-1 px-6 py-3 border-2 border-[#00ff00] bg-[#00ff00]/20 text-[#00ff00] font-bold text-sm uppercase hover:bg-[#00ff00]/30 transition-colors"
+                    style={{ boxShadow: '0 0 15px rgba(0,255,0,0.2)' }}
                   >
                     APPROVE
                   </button>
@@ -242,7 +243,7 @@ export default function Authority() {
             // DECISION RECORDED
           </p>
 
-          <h2 className="font-bold text-2xl sm:text-3xl text-[#00ff00] uppercase tracking-widest mb-3">
+          <h2 className="font-bold text-2xl sm:text-3xl text-[#00ff00] uppercase tracking-widest mb-3" style={{ textShadow: '0 0 20px rgba(0,255,0,0.5)' }}>
             SIGIL {decision === "approved" ? "APPROVED" : "REJECTED"}
           </h2>
 
@@ -269,6 +270,7 @@ export default function Authority() {
             <button
               onClick={handleContinue}
               className="px-8 py-3 border-2 border-[#00ff00] text-[#00ff00] font-bold text-sm uppercase tracking-wider hover:bg-[#00ff00]/20 transition-colors"
+              style={{ boxShadow: '0 0 15px rgba(0,255,0,0.2)' }}
             >
               CONTINUE
             </button>

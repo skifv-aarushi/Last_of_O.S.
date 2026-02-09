@@ -272,32 +272,54 @@ export default function PIDTuning() {
 
             {/* ═══ START SCREEN ═══ */}
             {gamePhase === "start" && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80">
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85">
                     <div
                         className="absolute inset-0 pointer-events-none opacity-10"
                         style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(249,115,22,0.08) 2px, rgba(249,115,22,0.08) 4px)' }}
                     />
-                    <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-4">
-            // MISSION BRIEFING
-                    </p>
-                    <h2 className="font-bold text-3xl sm:text-4xl text-[#f97316] uppercase tracking-widest mb-3">
-                        PID FINE-TUNING
-                    </h2>
-                    <p className="text-white/50 text-sm uppercase tracking-wider mb-2">
-                        PROTOCOL: STABILIZE THE BOT ACROSS <span className="text-[#f97316] font-bold">{MAX_ROUNDS} ROUNDS</span>
-                    </p>
-                    <p className="text-white/30 text-xs uppercase tracking-wider mb-8 max-w-md text-center">
-                        ADJUST P, I, D VALUES TO MINIMIZE OSCILLATION • TIME LIMIT: {GAME_DURATION}s
-                    </p>
-                    <button
-                        onClick={startGame}
-                        className="px-8 py-3 border-2 border-[#f97316] text-[#f97316] font-bold text-lg uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
-                    >
-                        START MANUAL OVERRIDE
-                    </button>
+
+                    {/* Standout Mission Briefing Card */}
+                    <div className="relative px-12 py-10 max-w-lg w-full mx-4" style={{
+                        background: 'linear-gradient(135deg, rgba(40,20,10,0.95) 0%, rgba(50,25,12,0.9) 100%)',
+                        border: '2px solid rgba(249,115,22,0.6)',
+                        boxShadow: '0 0 30px rgba(249,115,22,0.3), 0 0 60px rgba(249,115,22,0.15), inset 0 0 30px rgba(249,115,22,0.05)'
+                    }}>
+                        {/* Corner brackets */}
+                        <div className="absolute top-0 left-0 w-6 h-6 border-t-[3px] border-l-[3px] border-[#f97316]" />
+                        <div className="absolute top-0 right-0 w-6 h-6 border-t-[3px] border-r-[3px] border-[#f97316]" />
+                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-[3px] border-l-[3px] border-[#f97316]" />
+                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-[3px] border-r-[3px] border-[#f97316]" />
+
+                        <p className="text-[#f97316] text-sm uppercase tracking-[0.4em] mb-5 text-center font-medium">
+                // MISSION BRIEFING
+                        </p>
+                        <h2 className="font-bold text-3xl sm:text-4xl text-[#f97316] uppercase tracking-widest mb-5 text-center" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
+                            PID FINE-TUNING
+                        </h2>
+
+                        {/* Protocol Section - Highlighted */}
+                        <div className="bg-[#f97316]/10 border border-[#f97316]/30 rounded px-4 py-3 mb-4">
+                            <p className="text-white/80 text-sm uppercase tracking-wider text-center font-semibold">
+                                PROTOCOL: STABILIZE THE BOT ACROSS <span className="text-[#f97316] font-bold text-base">{MAX_ROUNDS} ROUNDS</span>
+                            </p>
+                        </div>
+
+                        <p className="text-white/50 text-sm uppercase tracking-wider mb-8 text-center leading-relaxed">
+                            ADJUST P, I, D VALUES TO MINIMIZE OSCILLATION • TIME LIMIT: {GAME_DURATION}s
+                        </p>
+
+                        <button
+                            onClick={startGame}
+                            className="w-full px-8 py-4 border-2 border-[#f97316] text-[#f97316] font-bold text-lg uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+                            style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
+                        >
+                            START MANUAL OVERRIDE
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => navigate("/attacker/play")}
-                        className="mt-4 px-6 py-2 border border-[#f97316]/20 text-[#f97316]/40 font-bold text-xs uppercase hover:text-[#f97316]/70 transition-colors"
+                        className="mt-6 px-6 py-2 border border-white/30 text-white/50 font-bold text-sm uppercase hover:text-white/80 hover:border-white/50 transition-colors"
                     >
                         ← BACK TO BASE
                     </button>
@@ -403,7 +425,8 @@ export default function PIDTuning() {
                         <div className="flex justify-center mt-4 mb-2">
                             <button
                                 onClick={submitRound}
-                                className="px-16 py-4 bg-[#3a4a5a] hover:bg-[#4a5a6a] text-white font-bold text-xl uppercase tracking-wider rounded-lg transition-colors"
+                                className="px-16 py-4 border-2 border-[#f97316] bg-black/50 text-white font-bold text-xl uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+                                style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
                             >
                                 CONFIRM
                             </button>
@@ -426,7 +449,7 @@ export default function PIDTuning() {
                             <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-6">
                 // SESSION COMPLETE
                             </p>
-                            <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-6">
+                            <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-6" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
                                 CALIBRATION COMPLETE
                             </h2>
 
@@ -461,7 +484,7 @@ export default function PIDTuning() {
                             <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-6">
                 // SESSION COMPLETE
                             </p>
-                            <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-6">
+                            <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-6" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
                                 CALIBRATION COMPLETE
                             </h2>
 

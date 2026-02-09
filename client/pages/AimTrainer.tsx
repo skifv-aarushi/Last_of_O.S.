@@ -182,10 +182,15 @@ export default function AimTrainer() {
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
       {/* Grid overlay */}
-      <img
-        src="/aim-grid.svg"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-15"
+      <div
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-15"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(110, 196, 229, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(110, 196, 229, 0.3) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}
       />
 
       {/* ═══ FLEX HUD LAYOUT ═══ */}
@@ -418,7 +423,20 @@ export default function AimTrainer() {
           transform: "translate(-50%, -50%)",
         }}
       >
-        <img src="/aim-crosshair-new.svg" alt="" className="w-24 h-14" style={{ filter: 'drop-shadow(0 0 6px rgba(106,186,237,0.4))' }} />
+        {/* CSS Crosshair */}
+        <div className="relative w-24 h-24" style={{ filter: 'drop-shadow(0 0 6px rgba(110, 196, 229, 0.4))' }}>
+          {/* Horizontal line */}
+          <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-[#6ec4e5]" style={{ transform: 'translateY(-50%)' }} />
+          {/* Vertical line */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-[#6ec4e5]" style={{ transform: 'translateX(-50%)' }} />
+          {/* Center dot */}
+          <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-[#6ec4e5] rounded-full" style={{ transform: 'translate(-50%, -50%)' }} />
+          {/* Corner brackets */}
+          <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#6ec4e5]" />
+          <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#6ec4e5]" />
+          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-[#6ec4e5]" />
+          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-[#6ec4e5]" />
+        </div>
       </div>
 
       {/* ─── TASK POPUP (placeholder) ─── */}

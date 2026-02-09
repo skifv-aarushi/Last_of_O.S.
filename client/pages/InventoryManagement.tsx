@@ -162,15 +162,14 @@ export default function InventoryManagement() {
         </h1>
 
         {/* Timer */}
-        <p className="font-bold text-[#6ec4e5] text-[30px] sm:text-[40px] uppercase text-center mt-1">
+        <p className="font-bold text-[#6ec4e5] text-[30px] sm:text-[40px] uppercase text-center mt-1" style={{ textShadow: '0 0 20px rgba(110,196,229,0.5)' }}>
           {mins}:{secs}
         </p>
 
         {/* Score & Error Margin row */}
         <div className="w-full max-w-[1000px] px-6 flex justify-between items-center mt-2">
           {/* Score panel */}
-          <div className="relative min-w-[180px]">
-            <img src="/card-bg-score.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative min-w-[180px] bg-black/50 border-2 border-[#6ec4e5]/30">
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
@@ -180,8 +179,7 @@ export default function InventoryManagement() {
           </div>
 
           {/* Error Margin panel */}
-          <div className="relative min-w-[350px]">
-            <img src="/card-bg-error.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative min-w-[350px] bg-black/50 border-2 border-[#6ec4e5]/30">
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <div className="flex items-center justify-center gap-4">
@@ -196,8 +194,7 @@ export default function InventoryManagement() {
 
         {/* Word card */}
         <div className="flex-1 flex flex-col items-center justify-center w-full px-6 mt-2">
-          <div className="relative" style={{ width: 543, height: 264 }}>
-            <img src="/card-bg-grid.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative bg-black/50 border-2 border-[#6ec4e5]/30" style={{ width: 543, height: 264 }}>
             <div className="relative w-full h-full flex items-center justify-center">
               <Corners size={37} />
               <p className="font-bold text-white text-[40px] sm:text-[50px]">
@@ -212,12 +209,8 @@ export default function InventoryManagement() {
             <button
               onClick={() => handleChoice(false)}
               disabled={gamePhase !== "playing"}
-              className="w-[333px] h-[72px] rounded-[15px] text-white text-[35px] font-normal transition-all hover:brightness-125 active:scale-95 disabled:opacity-40"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                backgroundColor: "#2a3548",
-                boxShadow: "-6px -6px 12px 0px rgba(255,255,255,0.25), 6px 6px 12px 0px rgba(0,0,0,0.25)",
-              }}
+              className="w-[333px] h-[72px] border-2 border-[#6ec4e5] bg-black/50 text-white text-[35px] font-normal transition-all hover:bg-[#6ec4e5]/20 active:scale-95 disabled:opacity-40"
+              style={{ boxShadow: '0 0 15px rgba(110,196,229,0.2)' }}
             >
               ARCHIVED
             </button>
@@ -226,12 +219,8 @@ export default function InventoryManagement() {
             <button
               onClick={() => handleChoice(true)}
               disabled={gamePhase !== "playing"}
-              className="w-[333px] h-[72px] rounded-[15px] text-white text-[35px] font-normal transition-all hover:brightness-125 active:scale-95 disabled:opacity-40"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                backgroundColor: "#2a3548",
-                boxShadow: "-6px -6px 12px 0px rgba(255,255,255,0.25), 6px 6px 12px 0px rgba(0,0,0,0.25)",
-              }}
+              className="w-[333px] h-[72px] border-2 border-[#6ec4e5] bg-black/50 text-white text-[35px] font-normal transition-all hover:bg-[#6ec4e5]/20 active:scale-95 disabled:opacity-40"
+              style={{ boxShadow: '0 0 15px rgba(110,196,229,0.2)' }}
             >
               LOG
             </button>
