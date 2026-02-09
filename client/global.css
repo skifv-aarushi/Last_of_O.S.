@@ -264,3 +264,26 @@
 .sigil-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 229, 255, 0.55);
 }
+
+/* Sigil warehouse custom scrollbar – attacker (orange) */
+.sigil-scroll-orange {
+  scroll-behavior: smooth;
+}
+
+.sigil-scroll-orange::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sigil-scroll-orange::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(100, 100, 120, 0.3);
+}
+
+.sigil-scroll-orange::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.35);
+  border: 1px solid rgba(249, 115, 22, 0.15);
+}
+
+.sigil-scroll-orange::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.55);
+}

@@ -100,7 +100,7 @@ export default function Play() {
       />
 
       {/* Health bar – overlaid on top of background */}
-      <div className="absolute z-30 top-[60px] sm:top-[70px] left-[20px] sm:left-[40px] right-[20px] sm:right-[40px] h-[40px] sm:h-[48px] px-2">
+      <div className="absolute z-30 top-[40px] sm:top-[50px] left-[20px] sm:left-[40px] right-[20px] sm:right-[40px] h-[40px] sm:h-[48px] px-2">
         <HealthBar
           value={health}
           total={1000}

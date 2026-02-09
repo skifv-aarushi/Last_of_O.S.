@@ -8,6 +8,12 @@ interface HealthBarProps {
   /** Optional label centred on the bar */
   label?: string;
   className?: string;
+  /** Health fill colour (default "#2B7C57") */
+  fillColor?: string;
+  /** Empty/background colour (default "#26314E") */
+  emptyColor?: string;
+  /** Outer border colour (default "#4B546E") */
+  borderColor?: string;
 }
 
 /**
@@ -23,6 +29,9 @@ export default function HealthBar({
   total = 1000,
   label,
   className = "",
+  fillColor = "#2B7C57",
+  emptyColor = "#26314E",
+  borderColor = "#4B546E",
 }: HealthBarProps) {
   const prevValue = useRef(value);
   // barWidth = the visible coloured bar width (%)
@@ -75,7 +84,7 @@ export default function HealthBar({
       className={`health-bar-container relative w-full select-none ${className}`}
       style={{
         padding: "4px",
-        background: "#4B546E",
+        background: borderColor,
         borderRadius: "5px",
         boxSizing: "border-box",
       }}
@@ -85,7 +94,7 @@ export default function HealthBar({
        style={{
          position: "absolute",
          inset: "4px",
-         background: "#26314E",
+         background: emptyColor,
          borderRadius: "2px",
        }}
      />
@@ -93,13 +102,12 @@ export default function HealthBar({
       <div
         className="health-bar-fill"
         style={{
-          background: isDead ? "#555" : "#2B7C57",
+          background: isDead ? "#555" : fillColor,
           width: `${barWidth}%`,
           height: "100%",
           position: "relative",
           transition: "width 0.5s linear",
           borderRadius: "2px",
-          clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 100%, 0 100%)",
         }}
       >
         {/* White hit flash — absolutely positioned on the right of the bar */}

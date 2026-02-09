@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import CivilianCharacter from "@/components/CivilianCharacter";
+import AttackerCharacter from "@/components/AttackerCharacter";
+import HealthBar from "@/components/HealthBar";
 import { useGameState } from "@/hooks/use-game-state";
 import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
 import { refreshToken } from "@/lib/firebase";
 
-const labScene = "/Attacker_Map.png";
+const mapScene = "/attacker-map.png";
 
 const ALL_GAMES = ["/attacker/aim-trainer", "/attacker/typing-test", "/attacker/visual-memory", "/attacker/inventory-management", "/attacker/pid-tuning"];
 
@@ -14,25 +15,33 @@ export default function Play() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Random game selection with no repeats
+  // ─── Zone navigation handlers ───
+
+  // Task Bay – random game selection with no repeats
   const handlePortalEnter = useCallback(() => {
     const playedRaw = localStorage.getItem("playedGames");
     let played: string[] = playedRaw ? JSON.parse(playedRaw) : [];
 
-    // Filter out already-played games
     let available = ALL_GAMES.filter((g) => !played.includes(g));
-
-    // If all played, reset the pool
     if (available.length === 0) {
       played = [];
       available = [...ALL_GAMES];
     }
 
-    // Pick random from available
     const chosen = available[Math.floor(Math.random() * available.length)];
     played.push(chosen);
     localStorage.setItem("playedGames", JSON.stringify(played));
     navigate(chosen);
+  }, [navigate]);
+
+  // User Info machine
+  const handleUserInfoEnter = useCallback(() => {
+    navigate("/attacker/user-info");
+  }, [navigate]);
+
+  // Personal Stats machine
+  const handlePersonalStatsEnter = useCallback(() => {
+    navigate("/attacker/personal-stats");
   }, [navigate]);
 
   // Auth guard – redirect to login if not signed in
@@ -40,7 +49,7 @@ export default function Play() {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
-      if (!u) navigate("/attacker/game");
+      if (!u) navigate("/game");
     });
     return unsub;
   }, [navigate]);
@@ -51,17 +60,20 @@ export default function Play() {
     return () => clearInterval(interval);
   }, []);
 
-
-
   // Read session from localStorage (set after login/join)
   const sessionId = localStorage.getItem("sessionId");
   const { state } = useGameState(sessionId);
 
-  const health = state?.globalHealth ?? 100;
-  const round = state?.currentRound ?? 1;
-  const role = state?.playerRole ?? "citizen";
-  const trustScore = state?.playerTrustScore ?? 0;
-  const totalPlayers = state?.totalPlayers ?? (user ? 1 : 0);
+  // --- TEST: auto-decrease health every 5 seconds ---
+  const [testHealth, setTestHealth] = useState(1000);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTestHealth((prev) => Math.max(0, prev - 100));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const health = testHealth;
 
   // WASD hint – show briefly then fade
   const [showHint, setShowHint] = useState(true);
@@ -73,82 +85,53 @@ export default function Play() {
   if (authLoading) {
     return (
       <div className="min-h-screen w-full bg-[#1f2227] flex items-center justify-center">
-        <span className="font-jura text-sm text-[#f97316] animate-pulse">LOADING...</span>
+        <span className="font-pixel text-sm text-[#f97316] animate-pulse">LOADING...</span>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227] flex flex-col">
-      {/* Top status bar – health (full width, above everything) */}
-      <div className="relative z-20 w-full shrink-0">
-        <div className="relative flex h-7 sm:h-8 w-full overflow-hidden bg-[#1b202b] shadow-[0_0_0_2px_rgba(12,14,20,0.7)]">
-          <div
-            className="h-full bg-[#2c7a54] health-bar-disintegrate transition-[width] duration-700"
-            style={{ width: `${health}%` }}
-          />
-          <div className="h-full flex-1 bg-[#2e3654]" />
-          {/* Chevron join */}
-          <div
-            className="absolute top-1/2 h-6 w-6 -translate-y-1/2 bg-[#2e3654] [clip-path:polygon(0_0,100%_50%,0_100%,18%_50%)] sm:h-7 sm:w-7 transition-[left] duration-700"
-            style={{ left: `${health}%` }}
-          />
-          {/* Health text */}
-          <span className="absolute inset-0 flex items-center justify-center font-jura text-[10px] sm:text-xs text-white/80 tracking-wider">
-            SYSTEM HEALTH {health}%
-          </span>
-        </div>
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#1f2227]">
+      {/* Full-screen background */}
+      <img
+        src={mapScene}
+        alt="Attacker map"
+        className="absolute inset-0 h-full w-full object-fill pixelated"
+      />
+
+      {/* Health bar – overlaid on top of background (same coords as citizen) */}
+      <div className="absolute z-30 top-[40px] sm:top-[50px] left-[20px] sm:left-[40px] right-[20px] sm:right-[40px] h-[40px] sm:h-[48px] px-2">
+        <HealthBar
+          value={health}
+          total={1000}
+          label={`SYSTEM HEALTH ${Math.round((health / 1000) * 100)}%`}
+          className="h-full"
+        />
       </div>
 
-      {/* Game area (below health bar) */}
-      <div className="relative flex-1">
-        <img
-          src={labScene}
-          alt="Lab scene"
-          className="absolute inset-0 h-full w-full object-cover pixelated"
+      {/* Game area (full viewport, character + hints) */}
+      <div className="relative w-full h-screen">
+
+        {/* Attacker character – move with W A S D */}
+        <AttackerCharacter
+          onPortalEnter={handlePortalEnter}
+          onUserInfoEnter={handleUserInfoEnter}
+          onPersonalStatsEnter={handlePersonalStatsEnter}
         />
-
-        {/* Civilian character – move with W A S D */}
-        <CivilianCharacter onPortalEnter={handlePortalEnter} />
-
-        {/* HUD – round, role, trust score */}
-        <div className="absolute z-10 top-2 left-4 sm:left-8 flex flex-col gap-1">
-          <span className="font-jura text-[10px] sm:text-xs text-[#f97316] uppercase">
-            Round {round}/4
-          </span>
-          <span className="font-jura text-[10px] sm:text-xs text-pixel-cream uppercase">
-            Role: {role}
-          </span>
-          <span className="font-jura text-[10px] sm:text-xs text-gray-400 uppercase">
-            Trust: {trustScore}
-          </span>
-          {user && (
-            <span className="font-jura text-[10px] sm:text-xs text-gray-500">
-              {user.displayName}
-            </span>
-          )}
-        </div>
-
-        {/* Player count */}
-        <div className="absolute z-10 top-2 right-4 sm:right-8 flex flex-col items-end gap-1">
-          <span className="font-jura text-[10px] sm:text-xs text-gray-400 uppercase">
-            Players: {totalPlayers}
-          </span>
-        </div>
 
         {/* WASD controls hint */}
         {showHint && (
           <div className="absolute z-30 inset-0 flex items-center justify-center pointer-events-none animate-fade-out">
             <div className="bg-black/70 border border-[#f97316]/50 px-6 py-4 flex flex-col items-center gap-2">
               <div className="flex gap-1">
-                <span className="font-jura text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">W</span>
+                <span className="font-pixel text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">W</span>
               </div>
               <div className="flex gap-1">
-                <span className="font-jura text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">A</span>
-                <span className="font-jura text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">S</span>
-                <span className="font-jura text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">D</span>
+                <span className="font-pixel text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">A</span>
+                <span className="font-pixel text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">S</span>
+                <span className="font-pixel text-sm text-[#f97316] border border-[#f97316]/40 bg-[#f97316]/10 w-8 h-8 flex items-center justify-center">D</span>
               </div>
-              <span className="font-jura text-[10px] text-gray-400 mt-1">USE KEYS TO MOVE</span>
+              <span className="font-pixel text-[10px] text-gray-400 mt-1">USE KEYS TO MOVE</span>
             </div>
           </div>
         )}

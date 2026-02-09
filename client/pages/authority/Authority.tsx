@@ -72,7 +72,7 @@ export default function Authority() {
 
       {/* Exit button */}
       <button
-        onClick={() => navigate("/play")}
+        onClick={() => navigate("/authority/play")}
         className="absolute top-6 left-6 z-30 px-4 py-2 border border-[#00ff00]/40 bg-black/50 text-[#00ff00] font-bold text-sm uppercase hover:bg-[#00ff00]/20 transition-colors"
       >
         ← EXIT
@@ -275,7 +275,7 @@ export default function Authority() {
               CONTINUE
             </button>
             <button
-              onClick={() => navigate("/play")}
+              onClick={() => navigate("/authority/play")}
               className="px-8 py-3 border-2 border-white/30 text-white/70 font-bold text-sm uppercase tracking-wider hover:bg-white/10 transition-colors"
             >
               RETURN TO BASE

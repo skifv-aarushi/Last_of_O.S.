@@ -19,7 +19,7 @@ export default function Index() {
 
         {/* Start Game Button */}
         <Link
-          to="/attacker/game"
+          to="/game"
           className="mt-12 sm:mt-16 md:mt-20 lg:mt-24 inline-block font-jura text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 border-4 border-white bg-transparent hover:bg-white/10 transition-all duration-200 active:scale-95 cursor-pointer text-center whitespace-nowrap"
         >
           START
