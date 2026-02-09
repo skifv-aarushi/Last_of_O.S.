@@ -223,8 +223,7 @@ export default function VisualMemory() {
         {/* Score & Error Margin row */}
         <div className="w-full max-w-[1000px] px-6 flex justify-between items-center mt-2">
           {/* Score panel */}
-          <div className="relative min-w-[180px]" style={{ padding: 0 }}>
-            <img src="/card-bg-score.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative min-w-[180px] bg-black/50 border-2 border-[#6ec4e5]/30" style={{ padding: 0 }}>
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
@@ -234,8 +233,7 @@ export default function VisualMemory() {
           </div>
 
           {/* Error Margin panel */}
-          <div className="relative min-w-[350px]" style={{ padding: 0 }}>
-            <img src="/card-bg-error.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative min-w-[350px] bg-black/50 border-2 border-[#6ec4e5]/30" style={{ padding: 0 }}>
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <div className="flex items-center justify-center gap-4">
@@ -251,10 +249,9 @@ export default function VisualMemory() {
         {/* Grid card — fixed size container so it never shifts */}
         <div className="flex-1 flex flex-col items-center justify-center w-full px-6 mt-2">
           <div
-            className="relative"
+            className="relative bg-black/50 border-2 border-[#6ec4e5]/30"
             style={{ width: FIXED_GRID_WIDTH + 64, height: FIXED_GRID_WIDTH + 64, padding: 0 }}
           >
-            <img src="/card-bg-grid.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
             <div className="relative w-full h-full flex items-center justify-center">
               <Corners size={13} />
               {/* CSS Grid */}

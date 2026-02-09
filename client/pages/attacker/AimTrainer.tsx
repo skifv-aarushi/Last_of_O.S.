@@ -186,10 +186,15 @@ export default function AimTrainer() {
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
       {/* Grid overlay */}
-      <img
-        src="/aim-grid.svg"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-15"
+      <div
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-15"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(249, 115, 22, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(249, 115, 22, 0.3) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}
       />
 
       {/* ═══ FLEX HUD LAYOUT ═══ */}
@@ -422,7 +427,13 @@ export default function AimTrainer() {
           transform: "translate(-50%, -50%)",
         }}
       >
-        <img src="/aim-crosshair-new.svg" alt="" className="w-24 h-14" style={{ filter: 'drop-shadow(0 0 6px rgba(249,115,22,0.4))' }} />
+        {/* SVG Crosshair */}
+        <img
+          src="/attacker_crosshair.svg"
+          alt="Crosshair"
+          className="w-[99px] h-[55px]"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(249,115,22,0.4))' }}
+        />
       </div>
 
       {/* ─── TASK POPUP (placeholder) ─── */}
@@ -454,34 +465,56 @@ export default function AimTrainer() {
       {/* ─── START SCREEN ─── */}
       {gamePhase === "start" && (
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 pointer-events-auto"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85 pointer-events-auto"
           style={{ fontFamily: "'Jura', sans-serif" }}
         >
           <div
             className="absolute inset-0 pointer-events-none opacity-10"
             style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(249,115,22,0.08) 2px, rgba(249,115,22,0.08) 4px)' }}
           />
-          <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-4">
-            // MISSION BRIEFING
-          </p>
-          <h2 className="font-bold text-3xl sm:text-4xl text-[#f97316] uppercase tracking-widest mb-3">
-            TERMINATE THE GLITCH
-          </h2>
-          <p className="text-white/50 text-sm uppercase tracking-wider mb-2">
-            PROTOCOL: ELIMINATE GLITCHES FOR <span className="text-[#f97316] font-bold">{GAME_DURATION}s</span>
-          </p>
-          <p className="text-white/30 text-xs uppercase tracking-wider mb-8">
-            CLICK THE 👾 TO ELIMINATE • MISSES COST AMMO
-          </p>
-          <button
-            onClick={startGame}
-            className="px-8 py-3 border-2 border-[#f97316] text-[#f97316] font-bold text-lg uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
-          >
-            START MISSION
-          </button>
+
+          {/* Standout Mission Briefing Card */}
+          <div className="relative px-12 py-10 max-w-lg w-full mx-4" style={{
+            background: 'linear-gradient(135deg, rgba(40,20,10,0.95) 0%, rgba(50,25,12,0.9) 100%)',
+            border: '2px solid rgba(249,115,22,0.6)',
+            boxShadow: '0 0 30px rgba(249,115,22,0.3), 0 0 60px rgba(249,115,22,0.15), inset 0 0 30px rgba(249,115,22,0.05)'
+          }}>
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-6 h-6 border-t-[3px] border-l-[3px] border-[#f97316]" />
+            <div className="absolute top-0 right-0 w-6 h-6 border-t-[3px] border-r-[3px] border-[#f97316]" />
+            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-[3px] border-l-[3px] border-[#f97316]" />
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-[3px] border-r-[3px] border-[#f97316]" />
+
+            <p className="text-[#f97316] text-sm uppercase tracking-[0.4em] mb-5 text-center font-medium">
+              // MISSION BRIEFING
+            </p>
+            <h2 className="font-bold text-3xl sm:text-4xl text-[#f97316] uppercase tracking-widest mb-5 text-center" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
+              TERMINATE THE GLITCH
+            </h2>
+
+            {/* Protocol Section - Highlighted */}
+            <div className="bg-[#f97316]/10 border border-[#f97316]/30 rounded px-4 py-3 mb-4">
+              <p className="text-white/80 text-sm uppercase tracking-wider text-center font-semibold">
+                PROTOCOL: ELIMINATE GLITCHES FOR <span className="text-[#f97316] font-bold text-base">{GAME_DURATION}s</span>
+              </p>
+            </div>
+
+            <p className="text-white/50 text-sm uppercase tracking-wider mb-8 text-center leading-relaxed">
+              CLICK THE 👾 TO ELIMINATE • MISSES COST AMMO
+            </p>
+
+            <button
+              onClick={startGame}
+              className="w-full px-8 py-4 border-2 border-[#f97316] text-[#f97316] font-bold text-lg uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+              style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
+            >
+              START MISSION
+            </button>
+          </div>
+
           <button
             onClick={() => navigate("/attacker/play")}
-            className="mt-4 px-6 py-2 border border-[#f97316]/20 text-[#f97316]/40 font-bold text-xs uppercase hover:text-[#f97316]/70 transition-colors"
+            className="mt-6 px-6 py-2 border border-white/30 text-white/50 font-bold text-sm uppercase hover:text-white/80 hover:border-white/50 transition-colors"
           >
             ← BACK TO BASE
           </button>
@@ -507,7 +540,7 @@ export default function AimTrainer() {
               <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-6">
                 // TIME LIMIT REACHED
               </p>
-              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3">
+              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
                 WAVE COMPLETE
               </h2>
 
@@ -531,6 +564,7 @@ export default function AimTrainer() {
                 <button
                   onClick={() => setInfectionChoice("none")}
                   className="px-8 py-3 border-2 border-[#f97316] text-[#f97316] font-bold text-sm uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+                  style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
                 >
                   CONTINUE WITHOUT INFECT
                 </button>
@@ -542,7 +576,7 @@ export default function AimTrainer() {
               <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-6">
                 // TIME LIMIT REACHED
               </p>
-              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3">
+              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
                 WAVE COMPLETE
               </h2>
 

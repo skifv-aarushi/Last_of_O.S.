@@ -166,15 +166,14 @@ export default function InventoryManagement() {
         </h1>
 
         {/* Timer */}
-        <p className="font-bold text-[#f97316] text-[30px] sm:text-[40px] uppercase text-center mt-1">
+        <p className="font-bold text-[#f97316] text-[30px] sm:text-[40px] uppercase text-center mt-1" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
           {mins}:{secs}
         </p>
 
         {/* Score & Error Margin row */}
         <div className="w-full max-w-[1000px] px-6 flex justify-between items-center mt-2">
           {/* Score panel */}
-          <div className="relative min-w-[180px]">
-            <img src="/card-bg-score.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative min-w-[180px] bg-black/50 border-2 border-[#f97316]/30">
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <p className="font-bold text-white text-[24px] sm:text-[30px] uppercase text-center">
@@ -184,8 +183,7 @@ export default function InventoryManagement() {
           </div>
 
           {/* Error Margin panel */}
-          <div className="relative min-w-[350px]">
-            <img src="/card-bg-error.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative min-w-[350px] bg-black/50 border-2 border-[#f97316]/30">
             <div className="relative px-5 py-3">
               <Corners size={16} />
               <div className="flex items-center justify-center gap-4">
@@ -200,8 +198,7 @@ export default function InventoryManagement() {
 
         {/* Word card */}
         <div className="flex-1 flex flex-col items-center justify-center w-full px-6 mt-2">
-          <div className="relative" style={{ width: 543, height: 264 }}>
-            <img src="/card-bg-grid.svg" alt="" className="absolute inset-0 w-full h-full" draggable={false} />
+          <div className="relative bg-black/50 border-2 border-[#f97316]/30" style={{ width: 543, height: 264 }}>
             <div className="relative w-full h-full flex items-center justify-center">
               <Corners size={37} />
               <p className="font-bold text-white text-[40px] sm:text-[50px]">
@@ -216,11 +213,8 @@ export default function InventoryManagement() {
             <button
               onClick={() => handleChoice(false)}
               disabled={gamePhase !== "playing"}
-              className="w-[333px] h-[72px] rounded-[15px] text-white text-[35px] font-normal transition-all hover:brightness-125 active:scale-95 disabled:opacity-40"
-              style={{
-                backgroundColor: "#2a3548",
-                boxShadow: "-6px -6px 12px 0px rgba(255,255,255,0.25), 6px 6px 12px 0px rgba(0,0,0,0.25)",
-              }}
+              className="w-[333px] h-[72px] border-2 border-[#f97316] bg-black/50 text-white text-[35px] font-normal transition-all hover:bg-[#f97316]/20 active:scale-95 disabled:opacity-40"
+              style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
             >
               ARCHIVED
             </button>
@@ -229,11 +223,8 @@ export default function InventoryManagement() {
             <button
               onClick={() => handleChoice(true)}
               disabled={gamePhase !== "playing"}
-              className="w-[333px] h-[72px] rounded-[15px] text-white text-[35px] font-normal transition-all hover:brightness-125 active:scale-95 disabled:opacity-40"
-              style={{
-                backgroundColor: "#2a3548",
-                boxShadow: "-6px -6px 12px 0px rgba(255,255,255,0.25), 6px 6px 12px 0px rgba(0,0,0,0.25)",
-              }}
+              className="w-[333px] h-[72px] border-2 border-[#f97316] bg-black/50 text-white text-[35px] font-normal transition-all hover:bg-[#f97316]/20 active:scale-95 disabled:opacity-40"
+              style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
             >
               LOG
             </button>
@@ -244,7 +235,7 @@ export default function InventoryManagement() {
       {/* START SCREEN */}
       {gamePhase === "start" && (
         <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85"
           style={{ fontFamily: "'Jura', sans-serif" }}
         >
           <div
@@ -254,30 +245,52 @@ export default function InventoryManagement() {
                 "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(249,115,22,0.08) 2px, rgba(249,115,22,0.08) 4px)",
             }}
           />
-          <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-4">// MISSION BRIEFING</p>
-          <h2 className="font-bold text-3xl sm:text-4xl text-[#f97316] uppercase tracking-widest mb-3">
-            REGISTER CATEGORIZATION
-          </h2>
-          <p className="text-white/50 text-sm uppercase tracking-wider mb-2">
-            {"PROTOCOL: MEMORIZE THE WORDS \u2022 "}
-            <span className="text-[#f97316] font-bold">60s</span>
-            {" TIMER"}
-          </p>
-          <p className="text-white/30 text-xs uppercase tracking-wider mb-2">
-            CLICK <span className="text-[#f97316]">LOG</span> IF THE WORD IS NEW
-          </p>
-          <p className="text-white/30 text-xs uppercase tracking-wider mb-8">
-            CLICK <span className="text-[#f97316]">ARCHIVED</span> IF YOU'VE SEEN IT BEFORE
-          </p>
-          <button
-            onClick={startGame}
-            className="px-8 py-3 border-2 border-[#f97316] text-[#f97316] font-bold text-lg uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
-          >
-            START CATEGORIZATION
-          </button>
+
+          {/* Standout Mission Briefing Card */}
+          <div className="relative px-12 py-10 max-w-lg w-full mx-4" style={{
+            background: 'linear-gradient(135deg, rgba(40,20,10,0.95) 0%, rgba(50,25,12,0.9) 100%)',
+            border: '2px solid rgba(249,115,22,0.6)',
+            boxShadow: '0 0 30px rgba(249,115,22,0.3), 0 0 60px rgba(249,115,22,0.15), inset 0 0 30px rgba(249,115,22,0.05)'
+          }}>
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-6 h-6 border-t-[3px] border-l-[3px] border-[#f97316]" />
+            <div className="absolute top-0 right-0 w-6 h-6 border-t-[3px] border-r-[3px] border-[#f97316]" />
+            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-[3px] border-l-[3px] border-[#f97316]" />
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-[3px] border-r-[3px] border-[#f97316]" />
+
+            <p className="text-[#f97316] text-sm uppercase tracking-[0.4em] mb-5 text-center font-medium">// MISSION BRIEFING</p>
+            <h2 className="font-bold text-3xl sm:text-4xl text-[#f97316] uppercase tracking-widest mb-5 text-center" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
+              REGISTER CATEGORIZATION
+            </h2>
+
+            {/* Protocol Section - Highlighted */}
+            <div className="bg-[#f97316]/10 border border-[#f97316]/30 rounded px-4 py-3 mb-4">
+              <p className="text-white/80 text-sm uppercase tracking-wider text-center font-semibold">
+                {"PROTOCOL: MEMORIZE THE WORDS \u2022 "}
+                <span className="text-[#f97316] font-bold text-base">60s</span>
+                {" TIMER"}
+              </p>
+            </div>
+
+            <p className="text-white/50 text-sm uppercase tracking-wider mb-2 text-center leading-relaxed">
+              CLICK <span className="text-[#f97316]">LOG</span> IF THE WORD IS NEW
+            </p>
+            <p className="text-white/50 text-sm uppercase tracking-wider mb-8 text-center leading-relaxed">
+              CLICK <span className="text-[#f97316]">ARCHIVED</span> IF YOU'VE SEEN IT BEFORE
+            </p>
+
+            <button
+              onClick={startGame}
+              className="w-full px-8 py-4 border-2 border-[#f97316] text-[#f97316] font-bold text-lg uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+              style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
+            >
+              START CATEGORIZATION
+            </button>
+          </div>
+
           <button
             onClick={() => navigate("/attacker/play")}
-            className="mt-4 px-6 py-2 border border-[#f97316]/20 text-[#f97316]/40 font-bold text-xs uppercase hover:text-[#f97316]/70 transition-colors"
+            className="mt-6 px-6 py-2 border border-white/30 text-white/50 font-bold text-sm uppercase hover:text-white/80 hover:border-white/50 transition-colors"
           >
             {"\u2190 BACK TO BASE"}
           </button>
@@ -306,7 +319,7 @@ export default function InventoryManagement() {
               <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-6">
                 {lives <= 0 ? "// SYSTEM FAILURE" : "// CATEGORIZATION COMPLETE"}
               </p>
-              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3">
+              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
                 {lives <= 0 ? "MEMORY BUFFER OVERFLOW" : "RESULTS"}
               </h2>
 
@@ -330,6 +343,7 @@ export default function InventoryManagement() {
                 <button
                   onClick={() => setInfectionChoice("none")}
                   className="px-8 py-3 border-2 border-[#f97316] text-[#f97316] font-bold text-sm uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+                  style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
                 >
                   CONTINUE WITHOUT INFECT
                 </button>
@@ -341,7 +355,7 @@ export default function InventoryManagement() {
               <p className="text-[#f97316]/60 text-xs uppercase tracking-[0.3em] mb-6">
                 {lives <= 0 ? "// SYSTEM FAILURE" : "// CATEGORIZATION COMPLETE"}
               </p>
-              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3">
+              <h2 className="font-bold text-2xl sm:text-3xl text-[#f97316] uppercase tracking-widest mb-3" style={{ textShadow: '0 0 20px rgba(249,115,22,0.5)' }}>
                 {lives <= 0 ? "MEMORY BUFFER OVERFLOW" : "RESULTS"}
               </h2>
 
@@ -386,6 +400,7 @@ export default function InventoryManagement() {
                 <button
                   onClick={() => navigate("/attacker/play")}
                   className="px-8 py-3 border-2 border-[#f97316] text-[#f97316] font-bold text-sm uppercase tracking-wider hover:bg-[#f97316]/20 transition-colors"
+                  style={{ boxShadow: '0 0 15px rgba(249,115,22,0.2)' }}
                 >
                   RETURN TO BASE
                 </button>

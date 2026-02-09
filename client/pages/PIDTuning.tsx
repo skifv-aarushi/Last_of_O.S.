@@ -415,7 +415,8 @@ export default function PIDTuning() {
                         <div className="flex justify-center mt-4 mb-2">
                             <button
                                 onClick={submitRound}
-                                className="px-16 py-4 bg-[#3a4a5a] hover:bg-[#4a5a6a] text-white font-bold text-xl uppercase tracking-wider rounded-lg transition-colors"
+                                className="px-16 py-4 border-2 border-[#6ec4e5] bg-black/50 text-white font-bold text-xl uppercase tracking-wider hover:bg-[#6ec4e5]/20 transition-colors"
+                                style={{ boxShadow: '0 0 15px rgba(110,196,229,0.2)' }}
                             >
                                 CONFIRM
                             </button>
@@ -437,7 +438,7 @@ export default function PIDTuning() {
                     <p className="text-[#6ec4e5]/60 text-xs uppercase tracking-[0.3em] mb-6">
             // SESSION COMPLETE
                     </p>
-                    <h2 className="font-bold text-2xl sm:text-3xl text-[#6ec4e5] uppercase tracking-widest mb-6">
+                    <h2 className="font-bold text-2xl sm:text-3xl text-[#6ec4e5] uppercase tracking-widest mb-6" style={{ textShadow: '0 0 20px rgba(110,196,229,0.5)' }}>
                         CALIBRATION COMPLETE
                     </h2>
 
