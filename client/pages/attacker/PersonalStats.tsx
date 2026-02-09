@@ -57,8 +57,20 @@ export default function AttackerPersonalStats() {
       author: playerName,
     }));
 
+    // Append mock data for testing scrolling (Available in all states)
+    const mockEntries = Array.from({ length: 15 }).map((_, i) => ({
+      key: `mock-${i}`,
+      name: "ARCHIVED TASK",
+      sigil: `/sigil_${(i % 5) + 1}.svg`,
+      score: 85 + (i % 15),
+      status: i % 2 === 0 ? "Approved" : "Pending",
+      author: "SYSTEM",
+    }));
+
+    const defaultsWithMock = [...defaults, ...mockEntries];
+
     if (!sessionId || !user) {
-      setEntries(defaults);
+      setEntries(defaultsWithMock);
       return;
     }
 
@@ -103,10 +115,10 @@ export default function AttackerPersonalStats() {
           return d;
         });
 
-        setEntries(result);
+        setEntries([...result, ...mockEntries]);
       })
       .catch(() => {
-        setEntries(defaults);
+        setEntries(defaultsWithMock);
       });
   }, [user]);
 
@@ -140,7 +152,7 @@ export default function AttackerPersonalStats() {
         {/* ── Main content ── */}
         <div className="flex-1 flex flex-col md:flex-row gap-6 items-center justify-center">
           {/* Left – History of Sigils */}
-          <div className="w-[640px] shrink-0 border border-[#f97316]/30 bg-black/60 p-4 sm:p-5 relative flex flex-col">
+          <div className="w-[640px] h-[500px] shrink-0 border border-[#f97316]/30 bg-black/60 p-4 sm:p-5 relative flex flex-col">
             <span className="absolute -top-[1px] -left-[1px] w-3 h-3 border-t border-l border-[#f97316]" />
             <span className="absolute -top-[1px] -right-[1px] w-3 h-3 border-t border-r border-[#f97316]" />
             <span className="absolute -bottom-[1px] -left-[1px] w-3 h-3 border-b border-l border-[#f97316]" />
@@ -235,6 +247,12 @@ export default function AttackerPersonalStats() {
           BACK TO MAP
         </button>
       </div>
+      <style>{`
+        .sigil-scroll-orange::-webkit-scrollbar { width: 6px; }
+        .sigil-scroll-orange::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 3px; }
+        .sigil-scroll-orange::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.3); border-radius: 3px; }
+        .sigil-scroll-orange::-webkit-scrollbar-thumb:hover { background: rgba(249, 115, 22, 0.5); }
+      `}</style>
     </div>
   );
 }

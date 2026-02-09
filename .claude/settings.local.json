@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(test -f:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)"
     ]
   }
 }

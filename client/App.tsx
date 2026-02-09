@@ -16,12 +16,11 @@ import PIDTuning from "./pages/PIDTuning";
 import UserInfo from "./pages/UserInfo";
 import PersonalStats from "./pages/PersonalStats";
 import Signup from "./pages/Signup";
-import HealthBarDemo from "./pages/HealthBarDemo";
-import Authority from "./pages/authority";
+import AuthorityGame from "./pages/authority";
 import AuthorityPlay from "./pages/authority/Play";
 import AuthorityUserInfo from "./pages/authority/UserInfo";
 import AuthorityPersonalStats from "./pages/authority/PersonalStats";
-import Auditor from "./pages/auditor";
+import AuditorGame, { Play as AuditorPlay, UserInfo as AuditorUserInfo } from "./pages/auditor";
 import AttackerIndex from "./pages/attacker/Index";
 import AttackerPlay from "./pages/attacker/Play";
 import AttackerAimTrainer from "./pages/attacker/AimTrainer";
@@ -53,12 +52,13 @@ export const App = () => (
           <Route path="/user-info" element={<UserInfo />} />
           <Route path="/personal-stats" element={<PersonalStats />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/health-demo" element={<HealthBarDemo />} />
           <Route path="/authority/play" element={<AuthorityPlay />} />
-          <Route path="/authority/task" element={<Authority />} />
+          <Route path="/authority/game" element={<AuthorityGame />} />
           <Route path="/authority/user-info" element={<AuthorityUserInfo />} />
           <Route path="/authority/personal-stats" element={<AuthorityPersonalStats />} />
-          <Route path="/auditor" element={<Auditor />} />
+          <Route path="/auditor/play" element={<AuditorPlay />} />
+          <Route path="/auditor/game" element={<AuditorGame />} />
+          <Route path="/auditor/user-info" element={<AuditorUserInfo />} />
           <Route path="/attacker" element={<AttackerIndex />} />
           <Route path="/attacker/play" element={<AttackerPlay />} />
           <Route path="/attacker/aim-trainer" element={<AttackerAimTrainer />} />

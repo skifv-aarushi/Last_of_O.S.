@@ -13,13 +13,15 @@ export default function Authority() {
   const navigate = useNavigate();
 
   // Sample data - replace with actual data from API/state
-  const [tasks, setTasks] = useState<SigilTask[]>([
-    { id: 1, name: "PID", score: 95, status: "pending", sigilIcon: "/sigil_1.svg" },
-    { id: 2, name: "PID", score: 95, status: "pending", sigilIcon: "/sigil_2.svg" },
-    { id: 3, name: "PID", score: 95, status: "pending", sigilIcon: "/sigil_3.svg" },
-    { id: 4, name: "PID", score: 95, status: "pending", sigilIcon: "/sigil_4.svg" },
-    { id: 5, name: "PID", score: 95, status: "pending", sigilIcon: "/sigil_5.svg" },
-  ]);
+  const [tasks, setTasks] = useState<SigilTask[]>(() =>
+    Array.from({ length: 25 }).map((_, i) => ({
+      id: i + 1,
+      name: "PID",
+      score: 90 + (i % 10),
+      status: i < 5 ? (i % 2 === 0 ? "approved" : "rejected") : "pending",
+      sigilIcon: `/sigil_${(i % 5) + 1}.svg`
+    }))
+  );
 
   const [selectedTask, setSelectedTask] = useState<SigilTask>(tasks[0]);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -96,13 +98,13 @@ export default function Authority() {
             <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-white/30" />
             <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-white/30" />
 
-            <div className="bg-black/40 border border-white/20 p-6">
-              <h2 className="font-bold text-xl uppercase text-white mb-6 tracking-wide">
+            <div className="bg-black/40 border border-white/20 p-6 h-[calc(100vh-200px)] flex flex-col">
+              <h2 className="font-bold text-xl uppercase text-white mb-6 tracking-wide flex-shrink-0">
                 HISTORY OF SIGILS PRODUCED
               </h2>
 
               {/* Sigils list */}
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 {tasks.map((task) => {
                   const getTaskStyle = () => {
                     if (task.status === "approved") {
@@ -116,40 +118,39 @@ export default function Authority() {
                   };
 
                   return (
-                  <button
-                    key={task.id}
-                    onClick={() => setSelectedTask(task)}
-                    className={`w-full flex items-center gap-4 p-4 border transition-all ${getTaskStyle()}`}
-                  >
-                    {/* Sigil icon */}
-                    <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center border border-[#00ff00]/40 rounded bg-black/50">
-                      <img
-                        src={task.sigilIcon}
-                        alt={`Sigil ${task.id}`}
-                        className="w-12 h-12 object-contain"
-                        style={{ filter: "brightness(0) saturate(100%) invert(69%) sepia(97%) saturate(1947%) hue-rotate(59deg) brightness(105%) contrast(109%)" }}
-                      />
-                    </div>
+                    <button
+                      key={task.id}
+                      onClick={() => setSelectedTask(task)}
+                      className={`w-full flex items-center gap-4 p-4 border transition-all ${getTaskStyle()}`}
+                    >
+                      {/* Sigil icon */}
+                      <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center border border-[#00ff00]/40 rounded bg-black/50">
+                        <img
+                          src={task.sigilIcon}
+                          alt={`Sigil ${task.id}`}
+                          className="w-12 h-12 object-contain"
+                          style={{ filter: "brightness(0) saturate(100%) invert(69%) sepia(97%) saturate(1947%) hue-rotate(59deg) brightness(105%) contrast(109%)" }}
+                        />
+                      </div>
 
-                    {/* Task info - show on all tasks */}
-                    <div className="flex-1 text-left">
-                      <p className="font-bold text-sm uppercase">
-                        <span className="text-white">TASK: </span>
-                        <span className="text-[#00ff00]">{task.name}</span>
-                      </p>
-                      <p className="font-bold text-sm uppercase mt-1">
-                        <span className="text-white">SCORE: </span>
-                        <span className="text-[#00ff00]">{task.score}</span>
-                      </p>
-                      {task.status !== "pending" && (
-                        <p className={`font-bold text-xs uppercase mt-2 ${
-                          task.status === "approved" ? "text-[#00ff00]" : "text-[#ff6b6b]"
-                        }`}>
-                          {task.status === "approved" ? "✓ APPROVED" : "✗ REJECTED"}
+                      {/* Task info - show on all tasks */}
+                      <div className="flex-1 text-left">
+                        <p className="font-bold text-sm uppercase">
+                          <span className="text-white">TASK: </span>
+                          <span className="text-[#00ff00]">{task.name}</span>
                         </p>
-                      )}
-                    </div>
-                  </button>
+                        <p className="font-bold text-sm uppercase mt-1">
+                          <span className="text-white">SCORE: </span>
+                          <span className="text-[#00ff00]">{task.score}</span>
+                        </p>
+                        {task.status !== "pending" && (
+                          <p className={`font-bold text-xs uppercase mt-2 ${task.status === "approved" ? "text-[#00ff00]" : "text-[#ff6b6b]"
+                            }`}>
+                            {task.status === "approved" ? "✓ APPROVED" : "✗ REJECTED"}
+                          </p>
+                        )}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
@@ -258,11 +259,10 @@ export default function Authority() {
             </div>
           </div>
 
-          <div className={`px-6 py-3 border-2 mb-8 ${
-            decision === "approved"
-              ? "border-[#00ff00] bg-[#00ff00]/10 text-[#00ff00]"
-              : "border-[#ff6b6b] bg-[#ff6b6b]/10 text-[#ff6b6b]"
-          } font-bold text-lg uppercase`}>
+          <div className={`px-6 py-3 border-2 mb-8 ${decision === "approved"
+            ? "border-[#00ff00] bg-[#00ff00]/10 text-[#00ff00]"
+            : "border-[#ff6b6b] bg-[#ff6b6b]/10 text-[#ff6b6b]"
+            } font-bold text-lg uppercase`}>
             STATUS: {decision === "approved" ? "APPROVED" : "REJECTED"}
           </div>
 
@@ -283,6 +283,12 @@ export default function Authority() {
           </div>
         </div>
       )}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 255, 0, 0.3); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 0, 0.5); }
+      `}</style>
     </div>
   );
 }

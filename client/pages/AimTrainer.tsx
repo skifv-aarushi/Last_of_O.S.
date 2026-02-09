@@ -423,20 +423,12 @@ export default function AimTrainer() {
           transform: "translate(-50%, -50%)",
         }}
       >
-        {/* CSS Crosshair */}
-        <div className="relative w-24 h-24" style={{ filter: 'drop-shadow(0 0 6px rgba(110, 196, 229, 0.4))' }}>
-          {/* Horizontal line */}
-          <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-[#6ec4e5]" style={{ transform: 'translateY(-50%)' }} />
-          {/* Vertical line */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-[#6ec4e5]" style={{ transform: 'translateX(-50%)' }} />
-          {/* Center dot */}
-          <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-[#6ec4e5] rounded-full" style={{ transform: 'translate(-50%, -50%)' }} />
-          {/* Corner brackets */}
-          <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#6ec4e5]" />
-          <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#6ec4e5]" />
-          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-[#6ec4e5]" />
-          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-[#6ec4e5]" />
-        </div>
+        <img
+          src="/citizen_crosshair.png"
+          alt="crosshair"
+          className="w-24 h-24 object-contain"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(110, 196, 229, 0.4))' }}
+        />
       </div>
 
       {/* ─── TASK POPUP (placeholder) ─── */}

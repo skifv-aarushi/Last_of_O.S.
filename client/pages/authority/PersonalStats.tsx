@@ -61,8 +61,20 @@ export default function AuthorityPersonalStats() {
       author: playerName,
     }));
 
+    // Append mock data for testing scrolling (Available in all states)
+    const mockEntries = Array.from({ length: 15 }).map((_, i) => ({
+      key: `mock-${i}`,
+      name: "ARCHIVED TASK",
+      sigil: `/sigil_${(i % 5) + 1}.svg`,
+      score: 85 + (i % 15),
+      status: i % 2 === 0 ? "Approved" : "Pending",
+      author: "SYSTEM",
+    }));
+
+    const defaultsWithMock = [...defaults, ...mockEntries];
+
     if (!sessionId || !user) {
-      setEntries(defaults);
+      setEntries(defaultsWithMock);
       return;
     }
 
@@ -107,10 +119,10 @@ export default function AuthorityPersonalStats() {
           return d;
         });
 
-        setEntries(result);
+        setEntries([...result, ...mockEntries]);
       })
       .catch(() => {
-        setEntries(defaults);
+        setEntries(defaultsWithMock);
       });
   }, [user]);
 
@@ -144,7 +156,7 @@ export default function AuthorityPersonalStats() {
         {/* ── Main content ── */}
         <div className="flex-1 flex flex-col md:flex-row gap-6 items-center justify-center">
           {/* Left – History of Sigils Authorized */}
-          <div className="w-[640px] shrink-0 border border-[#00ff00]/30 bg-black/60 p-4 sm:p-5 relative flex flex-col">
+          <div className="w-[640px] h-[500px] shrink-0 border border-[#00ff00]/30 bg-black/60 p-4 sm:p-5 relative flex flex-col">
             <span className="absolute -top-[1px] -left-[1px] w-3 h-3 border-t border-l border-[#00ff00]" />
             <span className="absolute -top-[1px] -right-[1px] w-3 h-3 border-t border-r border-[#00ff00]" />
             <span className="absolute -bottom-[1px] -left-[1px] w-3 h-3 border-b border-l border-[#00ff00]" />
@@ -239,6 +251,12 @@ export default function AuthorityPersonalStats() {
           BACK TO MAP
         </button>
       </div>
+      <style>{`
+        .sigil-scroll-green::-webkit-scrollbar { width: 6px; }
+        .sigil-scroll-green::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 3px; }
+        .sigil-scroll-green::-webkit-scrollbar-thumb { background: rgba(0, 255, 0, 0.3); border-radius: 3px; }
+        .sigil-scroll-green::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 0, 0.5); }
+      `}</style>
     </div>
   );
 }

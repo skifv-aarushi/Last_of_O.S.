@@ -15,9 +15,9 @@ export default function AuthorityPlay() {
 
   // ─── Zone navigation handlers ───
 
-  // Task Bay – navigate to authority task page
+  // Task Bay – navigate to authority game page
   const handlePortalEnter = useCallback(() => {
-    navigate("/authority/task");
+    navigate("/authority/game");
   }, [navigate]);
 
   // User Info machine
