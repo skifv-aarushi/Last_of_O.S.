@@ -1,0 +1,129 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { signInWithGoogle, auth, onAuthStateChanged } from "@/lib/firebase";
+import { registerUser, createSession, joinSession } from "@/lib/api";
+
+export default function Game() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
+
+  // Redirect already-authenticated users to /play
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user && !loading) {
+        navigate("/play", { replace: true });
+      }
+      setAuthChecking(false);
+    });
+    return unsub;
+  }, [navigate, loading]);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log("[Login] Starting Google sign-in...");
+      const user = await signInWithGoogle();
+      console.log("[Login] Google sign-in OK:", user.email);
+
+      // Register user in backend Firestore (idempotent — works for new & returning users)
+      try {
+        console.log("[Login] Registering user...");
+        const regResult = await registerUser(user.email ?? "", user.displayName ?? "Player");
+        console.log("[Login] Register result:", regResult);
+      } catch (regErr: any) {
+        console.warn("[Login] Register failed (non-critical):", regErr);
+      }
+
+      // Create a game session, join it, and persist sessionId
+      try {
+        console.log("[Login] Creating session...");
+        const { sessionId } = await createSession();
+        console.log("[Login] Session created:", sessionId);
+        localStorage.setItem("sessionId", sessionId);
+
+        // Join the session so the player is registered as a participant
+        try {
+          await joinSession(sessionId);
+          console.log("[Login] Joined session:", sessionId);
+        } catch (joinErr: any) {
+          console.warn("[Login] Join session failed (non-critical):", joinErr);
+        }
+      } catch (sessErr: any) {
+        console.warn("[Login] Session creation failed (non-critical):", sessErr);
+      }
+
+      navigate("/play", { replace: true });
+    } catch (err: any) {
+      console.error("[Login] Failed at step:", err);
+      setError(err.message ?? "Login failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show loading while checking initial auth state
+  if (authChecking) {
+    return (
+      <div className="min-h-screen w-full bg-pixel-navy flex items-center justify-center">
+        <span className="font-pixel text-sm text-pixel-cyan animate-pulse">LOADING...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-pixel-navy flex items-center justify-center overflow-hidden relative">
+      {/* Background image - pixel art cityscape */}
+      <img
+        src="https://api.builder.io/api/v1/image/assets/TEMP/37dd726e68a0725cf6d40157a803bb41645d6400?width=2880"
+        alt="Cyberpunk pixel art cityscape"
+        className="absolute inset-0 w-full h-full object-cover pixelated"
+      />
+
+      {/* Content container */}
+      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-4 sm:px-6 lg:px-8">
+        {/* Title */}
+        <h1 className="font-tiny text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-pixel-cream text-center leading-tight mb-8 sm:mb-12 md:mb-16">
+          THE LAST
+          <br />
+          OF O.S
+        </h1>
+
+        {/* Login Form Container */}
+        <div className="w-full max-w-md bg-black/60 border-2 sm:border-3 border-pixel-cyan p-6 sm:p-8 md:p-10">
+          {/* Heading */}
+          <h2 className="font-pixel text-base sm:text-lg md:text-xl text-white text-center mb-6 sm:mb-8">
+            PLAYER
+            <br />
+            LOGIN
+          </h2>
+
+          {/* Google Login Button */}
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "SIGNING IN..." : "LOGIN WITH\nGOOGLE"}
+          </button>
+
+          {error && (
+            <p className="mt-3 font-pixel text-[10px] sm:text-xs text-red-400 text-center">
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Back button */}
+        <button
+          onClick={() => navigate("/")}
+          className="mt-8 sm:mt-12 px-5 py-2 bg-black/50 border border-pixel-cyan/40 font-pixel text-xs sm:text-sm text-pixel-cyan hover:bg-pixel-cyan/20 hover:text-white transition-colors uppercase tracking-wider"
+        >
+          BACK
+        </button>
+      </div>
+    </div>
+  );
+}

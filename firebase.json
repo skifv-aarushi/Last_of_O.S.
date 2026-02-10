@@ -1,8 +1,11 @@
 {
   "hosting": {
-    "site": "last-of-os-485319",
-    "public": "dist/spa",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "public": "frontend",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -11,11 +14,11 @@
     ],
     "headers": [
       {
-        "source": "/assets/**",
+        "source": "/**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
+            "value": "no-cache, no-store, must-revalidate"
           }
         ]
       }

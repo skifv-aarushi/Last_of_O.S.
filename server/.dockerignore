@@ -1,0 +1,11 @@
+node_modules
+pnpm-lock.yaml
+package.json
+index.ts
+*.ts
+__pycache__
+*.pyc
+.DS_Store
+yantra_game.db
+test_*.py
+verify_*.py
