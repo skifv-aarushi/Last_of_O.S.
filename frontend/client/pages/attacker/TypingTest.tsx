@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { submitMinigame } from "@/lib/api";
 
 const GAME_DURATION = 60;
@@ -50,6 +51,7 @@ function calcTypingScore(wpm: number, accuracy: number): number {
 
 export default function TypingTest() {
   const navigate = useNavigate();
+  useGameGuard("attacker");
 
   const [gamePhase, setGamePhase] = useState<"start" | "playing" | "over">("start");
   const [paragraph, setParagraph] = useState("");

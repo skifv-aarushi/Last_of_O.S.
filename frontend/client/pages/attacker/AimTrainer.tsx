@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { submitMinigame } from "@/lib/api";
 
 const GRID_SIZE = 5;
@@ -20,6 +21,7 @@ function calcScore(hits: number): number {
 
 export default function AimTrainer() {
   const navigate = useNavigate();
+  useGameGuard("attacker");
 
   // ── Game states: "start" | "playing" | "over" ──
   const [gamePhase, setGamePhase] = useState<"start" | "playing" | "over">("start");

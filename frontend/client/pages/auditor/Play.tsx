@@ -4,6 +4,7 @@ import AuditorCharacter from "@/components/AuditorCharacter";
 import HealthBar from "@/components/HealthBar";
 import { useGameGuard, taskBlockedReason } from "@/hooks/use-game-guard";
 import GameBanner from "@/components/GameBanner";
+import MapControls from "@/components/MapControls";
 import { toast } from "sonner";
 
 const mapScene = "/auditor-map.png";
@@ -63,6 +64,7 @@ export default function AuditorPlay() {
       </div>
 
       <GameBanner state={state} accent="#a855f7" />
+      <MapControls accent="#a855f7" />
 
       {/* Game area (full viewport, character + hints) */}
       <div className="relative w-full h-screen">
@@ -85,7 +87,7 @@ export default function AuditorPlay() {
                 <span className="font-pixel text-sm text-[#a855f7] border border-[#a855f7]/40 bg-[#a855f7]/10 w-8 h-8 flex items-center justify-center">S</span>
                 <span className="font-pixel text-sm text-[#a855f7] border border-[#a855f7]/40 bg-[#a855f7]/10 w-8 h-8 flex items-center justify-center">D</span>
               </div>
-              <span className="font-pixel text-[10px] text-gray-400 mt-1">USE KEYS TO MOVE</span>
+              <span className="font-pixel text-[10px] text-gray-400 mt-1">WASD / ARROW KEYS TO MOVE</span>
             </div>
           </div>
         )}

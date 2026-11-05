@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { auth, onAuthStateChanged, type User } from "@/lib/auth";
 import { getLedger, type LedgerEntry } from "@/lib/api";
 
@@ -24,6 +25,7 @@ const CLASS_DESCRIPTION =
 
 export default function AuthorityUserInfo() {
   const navigate = useNavigate();
+  useGameGuard("authority");
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<PlayerStats>(NA_STATS);
@@ -44,7 +46,7 @@ export default function AuthorityUserInfo() {
 
     getLedger(sessionId)
       .then(({ entries }) => {
-        const mine = entries.filter((e: LedgerEntry) => e.playerId === user.uid);
+        const mine = entries.filter((e: LedgerEntry) => e.authorityId === user.uid);
         if (mine.length === 0) return;
 
         const scores = mine.map((e) => e.score);

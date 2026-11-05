@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { submitMinigame } from "@/lib/api";
 
 const GAME_DURATION = 60;
@@ -31,6 +32,7 @@ function pickNewWord(seen: Set<string>): string {
 
 export default function InventoryManagement() {
   const navigate = useNavigate();
+  useGameGuard("citizen");
 
   const [gamePhase, setGamePhase] = useState<"start" | "playing" | "over">("start");
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);

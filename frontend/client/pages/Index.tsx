@@ -28,6 +28,13 @@ export default function Index() {
           <br />
           GAME
         </Link>
+
+        <Link
+          to="/how-to-play"
+          className="mt-6 inline-block font-pixel text-xs sm:text-sm text-white px-5 py-2 border-2 border-white/60 bg-black/30 hover:bg-white/10 transition-colors"
+        >
+          HOW TO PLAY
+        </Link>
       </div>
     </div>
   );

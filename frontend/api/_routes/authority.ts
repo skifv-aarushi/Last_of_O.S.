@@ -21,7 +21,7 @@ router.get("/:id/certificates/pending", requireAuth, async (req, res) => {
     const g = await authorityGate(sid, req.user!.uid);
     if ("error" in g) { res.status(g.status).json({ error: g.error }); return; }
     const r = await db.execute({
-      sql: `SELECT id, problem_type, score, created_at FROM certificates
+      sql: `SELECT id, player_name, problem_type, score, created_at FROM certificates
             WHERE session_id = ? AND status = 'pending' ORDER BY created_at ASC LIMIT 50`,
       args: [sid],
     });
@@ -29,7 +29,8 @@ router.get("/:id/certificates/pending", requireAuth, async (req, res) => {
       success: true,
       cooldownUntil: Number(g.me.cooldown_until ?? 0),
       certificates: r.rows.map((x) => ({
-        id: x.id, problemType: x.problem_type, score: Number(x.score), createdAt: Number(x.created_at),
+        id: x.id, playerName: x.player_name ?? "Unknown", problemType: x.problem_type, score: Number(x.score),
+        createdAt: Number(x.created_at),
       })),
     });
   } catch (err: any) { res.status(500).json({ error: err.message }); }

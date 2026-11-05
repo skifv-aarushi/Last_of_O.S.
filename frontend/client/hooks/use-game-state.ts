@@ -15,7 +15,8 @@ export function useGameState(sessionId: string | null) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchState = useCallback(async () => {
-    if (!sessionId) return;
+    // a hidden tab doesn't need live updates; it refreshes the moment it becomes visible again
+    if (!sessionId || document.visibilityState === "hidden") return;
     try {
       const data = await getGameState(sessionId);
       setState(data);

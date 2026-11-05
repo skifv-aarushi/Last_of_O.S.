@@ -4,6 +4,7 @@ import CivilianCharacter from "@/components/CivilianCharacter";
 import HealthBar from "@/components/HealthBar";
 import { useGameGuard, taskBlockedReason } from "@/hooks/use-game-guard";
 import GameBanner from "@/components/GameBanner";
+import MapControls from "@/components/MapControls";
 import { toast } from "sonner";
 
 const labScene = "/lab-scene.png";
@@ -81,6 +82,7 @@ export default function Play() {
       </div>
 
       <GameBanner state={state} accent="#6ec4e5" />
+      <MapControls accent="#6ec4e5" />
 
       {/* Game area (full viewport, character + hints) */}
       <div className="relative w-full h-screen">
@@ -104,7 +106,7 @@ export default function Play() {
                 <span className="font-pixel text-sm text-pixel-cyan border border-pixel-cyan/40 bg-pixel-cyan/10 w-8 h-8 flex items-center justify-center">S</span>
                 <span className="font-pixel text-sm text-pixel-cyan border border-pixel-cyan/40 bg-pixel-cyan/10 w-8 h-8 flex items-center justify-center">D</span>
               </div>
-              <span className="font-pixel text-[10px] text-gray-400 mt-1">USE KEYS TO MOVE</span>
+              <span className="font-pixel text-[10px] text-gray-400 mt-1">WASD / ARROW KEYS TO MOVE</span>
             </div>
           </div>
         )}

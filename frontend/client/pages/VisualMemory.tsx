@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { submitMinigame } from "@/lib/api";
 
 const GAME_DURATION = 60;
@@ -17,6 +18,7 @@ function calcScore(level: number): number {
 
 export default function VisualMemory() {
   const navigate = useNavigate();
+  useGameGuard("citizen");
 
   const [gamePhase, setGamePhase] = useState<"start" | "watching" | "playing" | "over">("start");
   const [level, setLevel] = useState(1);

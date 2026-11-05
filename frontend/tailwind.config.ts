@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         pixel: ["'Press Start 2P'", "monospace"],
         tiny: ["'Tiny5'", "monospace"],
+        jura: ["'Jura'", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

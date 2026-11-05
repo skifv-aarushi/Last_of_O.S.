@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { PIDGame, type Environment } from "@/lib/pidGameLogic";
 import { submitMinigame } from "@/lib/api";
 
@@ -133,6 +134,7 @@ function EnvironmentDisplay({ env }: { env: Environment }) {
 
 export default function PIDTuning() {
     const navigate = useNavigate();
+    useGameGuard("attacker");
 
     // Game instance
     const gameRef = useRef<PIDGame | null>(null);

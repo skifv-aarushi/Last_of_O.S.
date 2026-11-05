@@ -1,20 +1,23 @@
-name: Deploy
+name: Database migrate
 
+# Vercel deploys the site itself (Git integration). This workflow only keeps the Turso schema in step:
+# it runs when the schema changes, or on demand from the Actions tab.
 on:
   push:
     branches: [main]
+    paths:
+      - "frontend/db/**"
+      - "frontend/scripts/migrate.ts"
+  workflow_dispatch:
 
-concurrency: deploy-production
+concurrency: db-migrate
 
 jobs:
-  deploy:
+  migrate:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,17 +29,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --no-frozen-lockfile
-
-      # Vercel CLI runs from the repo root because the project Root Directory is "frontend"
       - name: Apply database schema
         run: pnpm db:migrate
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-
-      - run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: .
-      - run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: .
-      - run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: .

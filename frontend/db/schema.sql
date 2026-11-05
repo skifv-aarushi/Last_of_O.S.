@@ -81,12 +81,3 @@ CREATE TABLE IF NOT EXISTS events (
   detail TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id, ts);
-
--- One-time email login codes (hashed); one pending code per address
-CREATE TABLE IF NOT EXISTS login_codes (
-  email TEXT PRIMARY KEY,
-  code_hash TEXT NOT NULL,
-  expires_at INTEGER NOT NULL,
-  attempts INTEGER NOT NULL DEFAULT 0,
-  sent_at INTEGER NOT NULL
-);

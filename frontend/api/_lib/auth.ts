@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { createHash } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { isAdminEmail } from "./game.js";
 
@@ -27,23 +27,6 @@ export function nameFromEmail(email: string) {
   const local = email.split("@")[0].replace(/[0-9]+/g, " ").replace(/[._+-]+/g, " ").trim();
   return local.split(/\s+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ") || "Player";
 }
-
-const codeHash = (email: string, code: string) =>
-  createHmac("sha256", process.env.SESSION_SECRET ?? "").update(`${email}:${code}`).digest("hex");
-
-export const CODE_TTL_MS = 10 * 60 * 1000;
-export const RESEND_AFTER_MS = 60 * 1000;
-export const MAX_ATTEMPTS = 5;
-
-export const newLoginCode = () => {
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  return { code };
-};
-export const hashLoginCode = codeHash;
-export const codesMatch = (email: string, code: string, storedHash: string) => {
-  const a = Buffer.from(codeHash(email, code), "hex"), b = Buffer.from(storedHash, "hex");
-  return a.length === b.length && timingSafeEqual(a, b);
-};
 
 export const signSession = (uid: string, email: string) =>
   new SignJWT({ email })

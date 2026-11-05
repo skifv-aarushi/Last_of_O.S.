@@ -12,11 +12,12 @@
     "test:api": "tsx scripts/smoke.ts"
   },
   "dependencies": {
+    "@clerk/backend": "^3.26.6",
+    "@clerk/react": "^6.18.5",
     "@libsql/client": "^0.15.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jose": "^6.0.0",
-    "nodemailer": "^10.3.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -56,7 +57,6 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.1",
-    "@types/nodemailer": "^8.0.2",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@types/three": "^0.176.0",

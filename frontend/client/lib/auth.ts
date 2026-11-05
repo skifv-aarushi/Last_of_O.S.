@@ -1,6 +1,7 @@
 /**
- * Email-code sign-in restricted to @vitstudent.ac.in.
- * A one-time code is emailed to the student, then exchanged on the backend for a session token.
+ * Sign-in via Clerk (emailed one-time code), restricted to @vitstudent.ac.in.
+ * Clerk proves the student owns the address; the backend then swaps the Clerk token for a game
+ * session token and rejects any non-VIT address.
  */
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -51,14 +52,9 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return json as T;
 }
 
-/** Step 1: email a 6-digit code to a @vitstudent.ac.in address. */
-export async function requestLoginCode(email: string): Promise<void> {
-  await post("/api/auth/request-code", { email });
-}
-
-/** Step 2: exchange the emailed code for a session. */
-export async function verifyLoginCode(email: string, code: string): Promise<User> {
-  const json = await post<{ token: string; user: User }>("/api/auth/verify-code", { email, code });
+/** Exchange a Clerk session token for a game session. Throws if the email is not a VIT one. */
+export async function exchangeClerkToken(clerkToken: string): Promise<User> {
+  const json = await post<{ token: string; user: User }>("/api/auth/clerk", { token: clerkToken });
   localStorage.setItem("authToken", json.token);
   localStorage.setItem("authUser", JSON.stringify(json.user));
   localStorage.setItem("playerName", json.user.displayName ?? "Player");
@@ -68,6 +64,8 @@ export async function verifyLoginCode(email: string, code: string): Promise<User
 
 /** Sign out and clear stored tokens. */
 export async function signOut(): Promise<void> {
+  // also end the Clerk session (Clerk exposes itself on window), otherwise the login page signs straight back in
+  try { await (window as any).Clerk?.signOut?.(); } catch { /* best effort */ }
   ["authToken", "authUser", "playerName", "sessionId"].forEach((k) => localStorage.removeItem(k));
   setUser(null);
 }

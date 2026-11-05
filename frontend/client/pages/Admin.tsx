@@ -3,10 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { auth, onAuthStateChanged } from "@/lib/auth";
 import { admin, ApiError, type AdminOverview, type Role } from "@/lib/api";
+import { PixelButton, PixelPanel } from "@/components/pixel";
 
 const ROLES: Role[] = ["citizen", "attacker", "authority", "auditor"];
 const ROLE_COLOR: Record<string, string> = {
-  citizen: "#6ec4e5", attacker: "#f97316", authority: "#22c55e", auditor: "#a855f7",
+  citizen: "#00e5ff", attacker: "#f97316", authority: "#00ff00", auditor: "#a855f7",
 };
 
 const fmtTime = (ms: number) => new Date(ms).toLocaleTimeString();
@@ -17,28 +18,25 @@ const fmtLeft = (ms: number) => {
 
 function Panel({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`bg-zinc-900 border border-zinc-800 rounded-lg p-4 ${className}`}>
-      <h2 className="text-xs uppercase tracking-widest text-zinc-400 mb-3">{title}</h2>
+    <PixelPanel className={`p-4 ${className}`}>
+      <h2 className="font-pixel text-[10px] sm:text-xs text-pixel-cyan mb-4 uppercase">{title}</h2>
       {children}
-    </section>
+    </PixelPanel>
   );
 }
 
 function Btn({ children, onClick, tone = "default", disabled }: {
   children: React.ReactNode; onClick: () => void; tone?: "default" | "primary" | "danger"; disabled?: boolean;
 }) {
-  const tones = {
-    default: "bg-zinc-800 hover:bg-zinc-700 text-zinc-100",
-    primary: "bg-cyan-600 hover:bg-cyan-500 text-white",
-    danger: "bg-red-700 hover:bg-red-600 text-white",
-  };
+  const accent = tone === "primary" ? "#00e5ff" : tone === "danger" ? "#f87171" : "#d1d5db";
   return (
-    <button disabled={disabled} onClick={onClick}
-      className={`px-3 py-1.5 rounded text-sm disabled:opacity-40 disabled:cursor-not-allowed ${tones[tone]}`}>
+    <PixelButton accent={accent} disabled={disabled} onClick={onClick} className="!px-3 !py-1.5">
       {children}
-    </button>
+    </PixelButton>
   );
 }
+
+const INPUT = "bg-black/60 border border-gray-600 px-2 py-1.5 text-sm text-white outline-none focus:border-pixel-cyan font-jura";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -84,13 +82,13 @@ export default function Admin() {
 
   if (denied) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-200 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-[#0a0e17] text-gray-200 flex flex-col items-center justify-center gap-4">
         <p>This account is not an admin. Add the email to the ADMIN_EMAILS environment variable.</p>
-        <Link to="/lobby" className="text-cyan-400 underline">Back to the game</Link>
+        <Link to="/lobby" className="text-pixel-cyan underline">Back to the game</Link>
       </div>
     );
   }
-  if (!data) return <div className="min-h-screen bg-zinc-950 text-zinc-400 flex items-center justify-center">Loading...</div>;
+  if (!data) return <div className="min-h-screen bg-[#0a0e17] text-gray-400 flex items-center justify-center">Loading...</div>;
 
   const s = data.session;
   const now = Date.now();
@@ -99,15 +97,17 @@ export default function Admin() {
   const pending = data.certificates.pending?.count ?? 0;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-4">
+    <div className="relative min-h-screen bg-[#0a0e17] text-gray-100 font-jura p-4 sm:p-6 overflow-hidden">
+      <img src="/user-info-bg.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-30 pointer-events-none" />
+      <div className="relative z-10 max-w-7xl mx-auto space-y-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold">Game control</h1>
-            <p className="text-sm text-zinc-400">The Last of O.S - live admin dashboard (refreshes every 3s)</p>
+            <h1 className="font-pixel text-base sm:text-xl text-white">ADMIN <span className="text-pixel-cyan">CONTROL</span></h1>
+            <p className="text-sm text-gray-400 mt-2">The Last of O.S - live dashboard (refreshes every 3s)</p>
           </div>
           <div className="flex gap-2">
-            <Link to="/lobby" className="px-3 py-1.5 rounded text-sm bg-zinc-800 hover:bg-zinc-700">Player view</Link>
+            <a href="/admin/screen" target="_blank" rel="noreferrer"><PixelButton accent="#facc15" className="!px-3 !py-1.5">Big screen</PixelButton></a>
+            <Link to="/lobby"><PixelButton accent="#d1d5db" className="!px-3 !py-1.5">Player view</PixelButton></Link>
             <Btn tone="primary" onClick={() => run("New lobby opened", () =>
               admin.newSession({ totalRounds: Number(rounds), roundMinutes: Number(minutes) }),
               s && s.status !== "completed" ? "This closes the current game for everyone. Continue?" : undefined)}>
@@ -118,7 +118,7 @@ export default function Admin() {
 
         {!s ? (
           <Panel title="No game yet">
-            <p className="text-sm text-zinc-400">Open a lobby with "New game", or just have a player sign in and one is created automatically.</p>
+            <p className="text-sm text-gray-400">Open a lobby with "New game", or just have a player sign in and one is created automatically.</p>
           </Panel>
         ) : (
           <>
@@ -130,18 +130,18 @@ export default function Admin() {
                 ["System health", `${Math.round(s.globalHealth)}%`],
                 ["Pending certificates", String(pending)],
               ].map(([k, v]) => (
-                <div key={k} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-xs uppercase tracking-widest text-zinc-500">{k}</div>
-                  <div className="text-2xl font-semibold mt-1">{v}</div>
-                </div>
+                <PixelPanel key={k} className="p-4">
+                  <div className="font-pixel text-[9px] text-gray-400 uppercase">{k}</div>
+                  <div className="font-pixel text-base sm:text-lg text-white mt-3">{v}</div>
+                </PixelPanel>
               ))}
             </div>
 
             {s.status === "completed" && (
-              <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3">
+              <PixelPanel className="p-4 flex flex-wrap items-center justify-between gap-3" accent="#facc15">
                 <span>Game over - winner: <b>{s.winner ?? "none"}</b></span>
                 <Btn onClick={() => run("Exported", () => admin.downloadCsv(s.id))}>Download results CSV</Btn>
-              </div>
+              </PixelPanel>
             )}
 
             <div className="grid lg:grid-cols-3 gap-4">
@@ -157,29 +157,29 @@ export default function Admin() {
                     onClick={() => run("Game ended", () => admin.end(null), "End the game now with no winner?")}>End game</Btn>
                 </div>
 
-                <label className="text-xs text-zinc-400">Announcement banner</label>
+                <label className="text-xs text-gray-400">Announcement banner</label>
                 <div className="flex gap-2 mb-4 mt-1">
                   <input value={announce} onChange={(e) => setAnnounce(e.target.value)} maxLength={200}
                     placeholder={s.announcement || "Message to all players"}
-                    className="flex-1 bg-zinc-800 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 ring-cyan-500" />
+                    className={`flex-1 ${INPUT}`} />
                   <Btn onClick={() => run("Announced", () => admin.announce(announce).then(() => setAnnounce("")))}>Send</Btn>
                   <Btn onClick={() => run("Cleared", () => admin.announce(""))}>Clear</Btn>
                 </div>
 
-                <label className="text-xs text-zinc-400">Set system health (0-100)</label>
+                <label className="text-xs text-gray-400">Set system health (0-100)</label>
                 <div className="flex gap-2 mb-4 mt-1">
                   <input value={healthInput} onChange={(e) => setHealthInput(e.target.value)} inputMode="numeric"
-                    className="w-24 bg-zinc-800 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 ring-cyan-500" />
+                    className={`w-24 ${INPUT}`} />
                   <Btn disabled={s.status === "completed" || healthInput === ""}
                     onClick={() => run("Health updated", () => admin.setHealth(Number(healthInput)))}>Apply</Btn>
                 </div>
 
-                <label className="text-xs text-zinc-400">Rounds / minutes per round (0 = manual)</label>
+                <label className="text-xs text-gray-400">Rounds / minutes per round (0 = manual)</label>
                 <div className="flex gap-2 mt-1">
                   <input value={rounds} onChange={(e) => setRounds(e.target.value)} inputMode="numeric"
-                    className="w-16 bg-zinc-800 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 ring-cyan-500" />
+                    className={`w-16 ${INPUT}`} />
                   <input value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="decimal"
-                    className="w-16 bg-zinc-800 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 ring-cyan-500" />
+                    className={`w-16 ${INPUT}`} />
                   <Btn disabled={s.status === "completed"}
                     onClick={() => run("Config saved", () => admin.config({ totalRounds: Number(rounds), roundMinutes: Number(minutes) }))}>
                     Apply to this game
@@ -195,12 +195,12 @@ export default function Admin() {
                     return (
                       <div key={r}>
                         <div className="flex justify-between text-sm"><span style={{ color: ROLE_COLOR[r] }}>{r}</span><span>{n}</span></div>
-                        <div className="h-2 bg-zinc-800 rounded"><div className="h-2 rounded" style={{ width: `${pct}%`, background: ROLE_COLOR[r] }} /></div>
+                        <div className="h-2 bg-gray-800"><div className="h-2" style={{ width: `${pct}%`, background: ROLE_COLOR[r] }} /></div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-4 text-sm text-zinc-400 space-y-1">
+                <div className="mt-4 text-sm text-gray-400 space-y-1">
                   {Object.entries(data.certificates).map(([k, v]) => (
                     <div key={k} className="flex justify-between"><span>{k} certificates</span><span>{v.count} (avg {Math.round(v.avg)})</span></div>
                   ))}
@@ -209,10 +209,10 @@ export default function Admin() {
 
               <Panel title="Activity log">
                 <ul className="space-y-1 max-h-64 overflow-y-auto text-xs font-mono">
-                  {data.events.length === 0 && <li className="text-zinc-500">Nothing yet.</li>}
+                  {data.events.length === 0 && <li className="text-gray-500">Nothing yet.</li>}
                   {data.events.map((e) => (
-                    <li key={e.id} className="text-zinc-300">
-                      <span className="text-zinc-500">{fmtTime(e.ts)}</span> {e.kind}
+                    <li key={e.id} className="text-gray-300">
+                      <span className="text-gray-500">{fmtTime(e.ts)}</span> {e.kind}
                       {e.target ? ` -> ${data.players.find((p) => p.id === e.target)?.name ?? e.target}` : ""}
                       {e.detail ? ` (${e.detail})` : ""}
                     </li>
@@ -223,20 +223,20 @@ export default function Admin() {
 
             <Panel title="Players">
               <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by name, email or role"
-                className="mb-3 w-full sm:w-72 bg-zinc-800 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 ring-cyan-500" />
+                className={`mb-3 w-full sm:w-72 ${INPUT}`} />
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="text-xs uppercase text-zinc-500 text-left">
+                  <thead className="font-pixel text-[9px] uppercase text-gray-400 text-left">
                     <tr><th className="py-2 pr-3">Name</th><th className="pr-3">Role</th><th className="pr-3">Trust</th>
                       <th className="pr-3">Tasks</th><th className="pr-3">Cooldown</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {players.map((p) => (
-                      <tr key={p.id} className="border-t border-zinc-800">
-                        <td className="py-2 pr-3">{p.name}<div className="text-xs text-zinc-500">{p.email}</div></td>
+                      <tr key={p.id} className="border-t border-gray-700">
+                        <td className="py-2 pr-3">{p.name}<div className="text-xs text-gray-500">{p.email}</div></td>
                         <td className="pr-3">
                           <select value={p.role} onChange={(e) => run("Role changed", () => admin.updatePlayer(p.id, { role: e.target.value as Role }))}
-                            className="bg-zinc-800 rounded px-1 py-1" style={{ color: ROLE_COLOR[p.role] }}>
+                            className="bg-black/60 border border-gray-600 px-1 py-1 font-jura" style={{ color: ROLE_COLOR[p.role] }}>
                             {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                           </select>
                         </td>
@@ -251,18 +251,18 @@ export default function Admin() {
                         </td>
                       </tr>
                     ))}
-                    {players.length === 0 && <tr><td colSpan={6} className="py-4 text-zinc-500">No players.</td></tr>}
+                    {players.length === 0 && <tr><td colSpan={6} className="py-4 text-gray-500">No players.</td></tr>}
                   </tbody>
                 </table>
               </div>
             </Panel>
 
             <Panel title="Recent games">
-              <ul className="text-sm text-zinc-300 space-y-1">
+              <ul className="text-sm text-gray-300 space-y-1">
                 {data.sessions.map((x) => (
                   <li key={x.id} className="flex justify-between gap-3">
                     <span>{new Date(x.createdAt).toLocaleString()} - {x.status}{x.winner ? ` (${x.winner} won)` : ""}</span>
-                    <button className="text-cyan-400 hover:underline" onClick={() => run("Exported", () => admin.downloadCsv(x.id))}>CSV</button>
+                    <button className="text-pixel-cyan hover:underline" onClick={() => run("Exported", () => admin.downloadCsv(x.id))}>CSV</button>
                   </li>
                 ))}
               </ul>

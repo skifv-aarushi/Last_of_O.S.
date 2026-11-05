@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
 import { auth, onAuthStateChanged, type User } from "@/lib/auth";
 import { getLedger, type LedgerEntry } from "@/lib/api";
 
@@ -29,6 +30,7 @@ interface SigilEntry {
 
 export default function AuthorityPersonalStats() {
   const navigate = useNavigate();
+  useGameGuard("authority");
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<SigilEntry[]>([]);
@@ -80,7 +82,7 @@ export default function AuthorityPersonalStats() {
 
     getLedger(sessionId)
       .then(({ entries: ledger }) => {
-        const mine = ledger.filter((e: LedgerEntry) => e.playerId === user.uid);
+        const mine = ledger.filter((e: LedgerEntry) => e.authorityId === user.uid);
 
         // Group best score per game type by matching certificate patterns
         const scoreMap = new Map<string, { score: number; action: string }>();

@@ -6,16 +6,16 @@ import { CONFIG, getPlayer, getSession, isAdminEmail, logEvent, tick } from "../
 const router = Router();
 
 // GET /api/session/:id/ledger
-// Auditors see every entry (including whether it was infected); everyone else only their own,
-// with the infection flag hidden.
+// Auditors see every entry (including whether it was infected); everyone else only the entries
+// they took part in (as the player or as the deciding authority), with the infection flag hidden.
 router.get("/:id/ledger", requireAuth, async (req, res) => {
   try {
     const sid = String(req.params.id);
     const me = await getPlayer(sid, req.user!.uid);
     const full = me?.role === "auditor" || isAdminEmail(req.user!.email);
     const r = await db.execute({
-      sql: `SELECT * FROM ledger WHERE session_id = ? ${full ? "" : "AND player_id = ?"} ORDER BY timestamp DESC LIMIT 500`,
-      args: full ? [sid] : [sid, req.user!.uid],
+      sql: `SELECT * FROM ledger WHERE session_id = ? ${full ? "" : "AND (player_id = ? OR authority_id = ?)"} ORDER BY timestamp DESC LIMIT 500`,
+      args: full ? [sid] : [sid, req.user!.uid, req.user!.uid],
     });
     res.json({
       success: true,

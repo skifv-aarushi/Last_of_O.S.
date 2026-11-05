@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
+import GameBanner from "@/components/GameBanner";
 import { toast } from "sonner";
 import { getPendingCertificates, processCertificate, type PendingCertificate } from "@/lib/api";
 
 interface SigilTask {
+  author: string;
   id: string;
   name: string;
   score: number;
@@ -13,6 +16,7 @@ interface SigilTask {
 
 export default function Authority() {
   const navigate = useNavigate();
+  const { state: gameState } = useGameGuard("authority");
 
   const [tasks, setTasks] = useState<SigilTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +31,7 @@ export default function Authority() {
       setTasks(certificates.map((c: PendingCertificate, i: number) => ({
         id: c.id,
         name: c.problemType,
+        author: c.playerName,
         score: c.score,
         status: "pending" as const,
         sigilIcon: `/sigil_${(i % 5) + 1}.svg`,
@@ -113,6 +118,7 @@ export default function Authority() {
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/60" />
+      <GameBanner state={gameState} accent="#00ff00" compact />
 
       {/* Exit button */}
       <button
@@ -234,7 +240,7 @@ export default function Authority() {
                   </p>
                   <p className="font-bold text-lg uppercase">
                     <span className="text-white">Author Name : </span>
-                    <span className="text-[#00ff00]">CITIZEN-{(selectedTask?.id ?? '').toString().padStart(4, '0')}</span>
+                    <span className="text-[#00ff00]">{selectedTask?.author ?? '—'}</span>
                   </p>
                   <p className="font-bold text-lg uppercase">
                     <span className="text-white">Score : </span>

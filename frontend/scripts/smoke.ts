@@ -1,7 +1,7 @@
 import { createApi } from "../api/_app.ts";
 import { signSession } from "../api/_lib/auth.ts";
 import { db } from "../api/_lib/db.ts";
-import { outbox } from "../api/_lib/mail.ts";
+import { clerkImpl } from "../api/_lib/clerk.ts";
 
 const srv = createApi().listen(0);
 const base = `http://localhost:${(srv.address() as any).port}`;
@@ -12,26 +12,27 @@ const call = async (tok: string, m: string, p: string, b?: any) => {
 let fails = 0;
 const ok = (name: string, cond: boolean, extra?: any) => { if (!cond) fails++; console.log(cond ? "PASS" : "FAIL", name, cond ? "" : JSON.stringify(extra)); };
 
-// ---- email-code login ----
-const rc = (email: string) => call("", "POST", "/api/auth/request-code", { email });
-ok("non-VIT email rejected", (await rc("someone@gmail.com")).s === 400);
-ok("lookalike domain rejected", (await rc("x@vitstudent.ac.in.evil.com")).s === 400);
-ok("code requested", (await rc("Test.User2024@vitstudent.ac.in")).s === 200 && outbox.length === 1);
-ok("resend throttled", (await rc("test.user2024@vitstudent.ac.in")).s === 429);
-const good = outbox[0].code, bad = good === "000000" ? "111111" : "000000";
-ok("wrong code rejected", (await call("", "POST", "/api/auth/verify-code", { email: "test.user2024@vitstudent.ac.in", code: bad })).s === 401);
-const login = await call("", "POST", "/api/auth/verify-code", { email: "test.user2024@vitstudent.ac.in", code: good });
-ok("correct code logs in, name derived", login.s === 200 && login.j.user.displayName === "Test User" && !!login.j.token, login);
+// ---- Clerk login (token verification is stubbed; the real one calls Clerk) ----
+clerkImpl.verify = async (token: string) => {
+  if (!token.startsWith("clerk:")) throw new Error("bad token");
+  const [, email, name] = token.split(":");
+  return { email, name: name || "" };
+};
+const ex = (token: string) => call("", "POST", "/api/auth/clerk", { token });
+ok("non-VIT email rejected", (await ex("clerk:someone@gmail.com")).s === 403);
+ok("lookalike domain rejected", (await ex("clerk:x@vitstudent.ac.in.evil.com")).s === 403);
+ok("invalid Clerk token rejected", (await ex("garbage")).s === 401);
+const login = await ex("clerk:Test.User2024@vitstudent.ac.in:");
+ok("VIT email logs in, name derived", login.s === 200 && login.j.user.displayName === "Test User" && !!login.j.token, login);
+ok("Clerk name preferred when present", (await ex("clerk:a.b@vitstudent.ac.in:Real Name")).j.user.displayName === "Real Name");
+ok("same email = same player id", (await ex("clerk:test.user2024@vitstudent.ac.in:")).j.user.uid === login.j.user.uid);
 ok("session token works", (await call(login.j.token, "GET", "/api/lobby")).s === 200);
-ok("code is single-use", (await call("", "POST", "/api/auth/verify-code", { email: "test.user2024@vitstudent.ac.in", code: good })).s === 401);
-await db.execute("DELETE FROM login_codes");
-await rc("brute@vitstudent.ac.in");
-for (let i = 0; i < 5; i++) await call("", "POST", "/api/auth/verify-code", { email: "brute@vitstudent.ac.in", code: outbox[outbox.length - 1].code === "123456" ? "654321" : "123456" });
-ok("locked out after 5 wrong attempts", (await call("", "POST", "/api/auth/verify-code", { email: "brute@vitstudent.ac.in", code: outbox[outbox.length - 1].code })).s === 429);
 ok("no token = 401", (await call("", "GET", "/api/lobby")).s === 401);
 
 const ids = ["u1", "u2", "u3", "u4", "u5", "u6"];
 const T: Record<string, string> = {};
+process.env.ADMIN_EMAILS = "adm@vitstudent.ac.in";
+T.adm = await signSession("adm", "adm@vitstudent.ac.in");
 for (const i of ids) T[i] = await signSession(i, `${i}@vitstudent.ac.in`);
 // users must exist for the lobby display-name lookup
 for (const i of ids) await db.execute({ sql: "INSERT INTO users (id,email,display_name,created_at) VALUES (?,?,?,?)", args: [i, `${i}@vitstudent.ac.in`, `Name ${i}`, Date.now()] });
@@ -40,7 +41,7 @@ ok("admin blocked for non-admin", (await call(T.u2, "GET", "/api/admin/overview"
 for (const i of ids) { const r = await call(T[i], "POST", "/api/lobby/join"); if (i === "u1") var sid = r.j.sessionId; ok(`join ${i}`, r.s === 200 && r.j.sessionId === sid, r); }
 ok("lobby shared by all", (await call(T.u3, "GET", "/api/lobby")).j.totalPlayers === 6);
 ok("minigame refused before start", (await call(T.u2, "GET", `/api/session/${sid}/minigame`)).s === 400);
-ok("start needs 4+", (await call(T.u1, "POST", "/api/admin/session/start")).s === 200);
+ok("start needs 4+", (await call(T.adm, "POST", "/api/admin/session/start")).s === 200);
 const states: Record<string, any> = {};
 for (const i of ids) states[i] = (await call(T[i], "GET", `/api/session/${sid}/state`)).j;
 const byRole = (r: string) => ids.filter((i) => states[i].playerRole === r);
@@ -75,6 +76,8 @@ ok("health = 94", (await call(T[cit], "GET", `/api/session/${sid}/state`)).j.glo
 ok("double process rejected", (await call(T[auth], "POST", `/api/session/${sid}/certificates/${honest.id}/process`, { action: "reject" })).s === 400);
 
 ok("citizen ledger hides infection", (await call(T[atk], "GET", `/api/session/${sid}/ledger`)).j.entries.every((e: any) => !e.wasInfected));
+{ const al = (await call(T[auth], "GET", `/api/session/${sid}/ledger`)).j.entries;
+  ok("authority sees own decisions, infection hidden", al.length === 2 && al.every((e: any) => !e.wasInfected), al); }
 ok("auditor ledger shows infection", (await call(T[aud], "GET", `/api/session/${sid}/ledger`)).j.entries.some((e: any) => e.wasInfected));
 const lb = (await call(T[cit], "GET", `/api/session/${sid}/leaderboard`)).j.leaderboard;
 ok("roles hidden from citizen, names shown", lb.every((p: any) => p.role === null) && lb[0].name.startsWith("Name"), lb[0]);
@@ -87,18 +90,18 @@ ok("auditor ability on cooldown", (await call(T[aud], "POST", `/api/session/${si
 await db.execute({ sql: "INSERT INTO certificates (id,session_id,player_id,player_name,problem_type,problem_id,score,created_at) VALUES ('x',?,?,?,?,?,?,?)", args: [sid, cit, "n", "aim", "aim_9", 50, Date.now()] });
 ok("cooled-down authority blocked", (await call(T[auth], "POST", `/api/session/${sid}/certificates/x/process`, { action: "approve" })).s === 429);
 
-await call(T.u1, "POST", "/api/admin/session/announce", { message: "Round starting!" });
+await call(T.adm, "POST", "/api/admin/session/announce", { message: "Round starting!" });
 ok("announcement visible", (await call(T[cit], "GET", `/api/session/${sid}/state`)).j.announcement === "Round starting!");
-ok("admin next round", (await call(T.u1, "POST", "/api/admin/session/next-round")).j.newRound === 2);
+ok("admin next round", (await call(T.adm, "POST", "/api/admin/session/next-round")).j.newRound === 2);
 await db.execute({ sql: "UPDATE sessions SET round_started_at = ? WHERE id = ?", args: [Date.now() - 6 * 60_000, sid] });
 ok("timer auto-advances round", (await call(T[cit], "GET", `/api/session/${sid}/state`)).j.currentRound === 3);
-await call(T.u1, "POST", "/api/admin/session/health", { value: 0 });
+await call(T.adm, "POST", "/api/admin/session/health", { value: 0 });
 const end = await call(T[cit], "GET", `/api/session/${sid}/state`);
 ok("health 0 -> attackers win", end.j.status === "completed" && end.j.winner === "attacker", end.j);
 ok("roles revealed at end", (await call(T[cit], "GET", `/api/session/${sid}/leaderboard`)).j.leaderboard.every((p: any) => p.role));
 const next = await call(T[cit], "POST", "/api/lobby/join");
 ok("joining after game over opens a new lobby", next.j.sessionId && next.j.sessionId !== sid && next.j.status === "waiting", next);
-const csv = await fetch(`${base}/api/admin/results.csv?session=${sid}`, { headers: { Authorization: `Bearer ${T.u1}` } });
+const csv = await fetch(`${base}/api/admin/results.csv?session=${sid}`, { headers: { Authorization: `Bearer ${T.adm}` } });
 ok("csv export", csv.status === 200 && (await csv.text()).split("\n").length === 7);
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASSED");
 srv.close();

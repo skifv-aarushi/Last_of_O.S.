@@ -1,24 +1,23 @@
-import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
+// Toasts styled like the game's panels: dark, thin border, pixel title
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="dark"
       className="toaster group"
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group toast !rounded-none !bg-black/90 !text-white !border !border-gray-600 !font-jura !shadow-lg",
+          title: "!font-pixel !text-[10px] !leading-relaxed",
+          description: "!text-gray-300",
+          success: "!border-[#00e5ff]/60",
+          error: "!border-red-400/70",
+          actionButton: "!rounded-none !bg-[#00e5ff] !text-black",
+          cancelButton: "!rounded-none !bg-gray-700 !text-white",
         },
       }}
       {...props}

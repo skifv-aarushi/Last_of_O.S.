@@ -3,6 +3,7 @@
  * Talks to the Vercel serverless API (/api).
  */
 
+import { toast } from "sonner";
 import { signOut } from "./auth";
 
 const API_BASE =
@@ -117,15 +118,23 @@ export async function submitMinigame(
   answer: number,
   infectionLevel?: "none" | "minor" | "major"
 ) {
-  return request<{
-    success: boolean;
-    certificateId: string;
-    score: number;
-    bufferTime: number;
-  }>(`/api/session/${sessionId}/minigame/submit`, {
-    method: "POST",
-    body: JSON.stringify({ problemId, answer, infectionLevel }),
-  });
+  // Every minigame calls this, so player feedback lives here: confirm the certificate or explain the failure
+  try {
+    const res = await request<{
+      success: boolean;
+      certificateId: string;
+      score: number;
+      bufferTime: number;
+    }>(`/api/session/${sessionId}/minigame/submit`, {
+      method: "POST",
+      body: JSON.stringify({ problemId, answer, infectionLevel }),
+    });
+    toast.success(`Certificate sent to the Authority - score ${res.score}`);
+    return res;
+  } catch (err: any) {
+    toast.error(err?.message ? `Score not recorded: ${err.message}` : "Score not recorded. Check your connection.");
+    throw err;
+  }
 }
 
 // ---------- Authority ----------
@@ -218,6 +227,7 @@ export interface MinigameProblem {
 
 export interface PendingCertificate {
   id: string;
+  playerName: string;
   problemType: string;
   score: number;
   createdAt: number;

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameGuard } from "@/hooks/use-game-guard";
+import GameBanner from "@/components/GameBanner";
 import { toast } from "sonner";
 import { getLeaderboard, getLedger, issueCooldown, type LeaderboardEntry, type LedgerEntry } from "@/lib/api";
 
@@ -16,6 +18,8 @@ interface Citizen {
 
 interface Certificate {
     id: number;
+    playerId: string;
+    authorityId: string;
     taskName: string;
     score: number;
     status: string;
@@ -24,8 +28,6 @@ interface Certificate {
     sigilIcon: string;
 }
 
-const FIRST_NAMES = ["ALEX", "SAM", "JORDAN", "TAYLOR", "CASEY", "MORGAN", "RILEY", "QUINN", "AVERY", "PHELPS", "BLAKE", "DREW", "REESE", "CAMERON", "SKYLER"];
-const ROLES = ["CITIZEN", "AUTHORITY", "ATTACKER", "AUDITOR"] as const;
 
 // Map roles to specific sprites
 const ROLE_SPRITES: Record<string, string> = {
@@ -35,10 +37,10 @@ const ROLE_SPRITES: Record<string, string> = {
     "AUDITOR": "/auditor-sprites1.png"
 };
 
-const getRandomElement = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 export default function AuditorTaskBay() {
     const navigate = useNavigate();
+    const { state: gameState } = useGameGuard("auditor");
 
     // Sample data for citizens/authorities (left panel)
     const [citizens, setCitizens] = useState<Citizen[]>([]);
@@ -63,28 +65,46 @@ export default function AuditorTaskBay() {
             }));
         }).catch(console.error);
     };
-    useEffect(() => { loadPlayers(); }, []);
-
     // Certificates / ledger entries for the session
     const [certificates, setCertificates] = useState<Certificate[]>([]);
-    useEffect(() => {
+    const loadLedger = () => {
         const sessionId = localStorage.getItem("sessionId");
         if (!sessionId) return;
         getLedger(sessionId).then(({ entries }) => {
             setCertificates(entries.map((e: LedgerEntry, i: number) => ({
                 id: i + 1,
+                playerId: e.playerId,
+                authorityId: e.authorityId,
                 taskName: e.action,
                 score: e.score,
-                status: e.action === "rejected" ? "Rejected" : e.wasInfected ? "Infected" : "Approved",
-                author: e.playerName ?? e.playerId,
+                status: e.action === "rejected"
+                    ? (e.wasInfected ? "Rejected (infected)" : "Rejected")
+                    : (e.wasInfected ? "Approved - INFECTED" : "Approved"),
+                author: e.playerName ?? "Unknown",
                 authority: e.authorityId,
                 sigilIcon: `/sigil_${(i % 5) + 1}.svg`,
             })));
         }).catch(console.error);
+    };
+
+    // keep the records live while the auditor watches
+    useEffect(() => {
+        loadPlayers();
+        loadLedger();
+        const t = setInterval(() => { loadPlayers(); loadLedger(); }, 8000);
+        return () => clearInterval(t);
     }, []);
 
     const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
-    const [selectedCertificate, setSelectedCertificate] = useState<Certificate>(certificates[0]);
+    const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
+
+    // An authority's record is the decisions they made; anyone else's is the certificates they produced
+    const nameOf = (playerId: string) => citizens.find((c) => c.playerId === playerId)?.name ?? "Unknown";
+    const visible = certificates.filter((c) =>
+        !selectedCitizen ? true
+            : selectedCitizen.role === "AUTHORITY" ? c.authorityId === selectedCitizen.playerId
+                : c.playerId === selectedCitizen.playerId);
+    const shownCertificate = visible.find((c) => c.id === selectedCertificate?.id) ?? visible[0] ?? null;
     const [showConfirmation, setShowConfirmation] = useState(false);
 
     // Set initial selected citizen after generation
@@ -147,6 +167,7 @@ export default function AuditorTaskBay() {
 
             {/* Dark overlay */}
             <div className="absolute inset-0 bg-black/60" />
+            <GameBanner state={gameState} accent="#a855f7" compact />
 
             {/* Exit button */}
             <button
@@ -182,7 +203,7 @@ export default function AuditorTaskBay() {
                             {/* Citizens list - SCROLLABLE */}
                             <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                                 {citizens.map((citizen) => {
-                                    const isSelected = selectedCitizen?.id === citizen.id;
+                                    const isSelected = selectedCitizen?.playerId === citizen.playerId;
 
                                     return (
                                         <button
@@ -208,7 +229,7 @@ export default function AuditorTaskBay() {
                                                     <span className="text-[#a855f7]">{citizen.name}</span>
                                                 </p>
                                                 <p className="font-bold text-[11px] uppercase leading-tight mt-1">
-                                                    <span className="text-white">TOTAL TASKS : </span>
+                                                    <span className="text-white">TRUST : </span>
                                                     <span className="text-[#a855f7]">{citizen.totalTasks}</span>
                                                 </p>
                                             </div>
@@ -244,8 +265,13 @@ export default function AuditorTaskBay() {
 
                                 {/* Certificates grid - SCROLLABLE */}
                                 <div className="grid grid-cols-3 gap-4 overflow-y-auto flex-1 content-start pr-2 custom-scrollbar">
-                                    {certificates.map((cert) => {
-                                        const isSelected = selectedCertificate.id === cert.id;
+                                    {visible.length === 0 && (
+                                        <p className="col-span-3 text-center text-xs uppercase text-white/50 py-8">
+                                            No records yet{selectedCitizen ? ` for ${selectedCitizen.name}` : ""}
+                                        </p>
+                                    )}
+                                    {visible.map((cert) => {
+                                        const isSelected = shownCertificate?.id === cert.id;
                                         return (
                                             <button
                                                 key={cert.id}
@@ -292,7 +318,7 @@ export default function AuditorTaskBay() {
 
                                         <div className="w-28 h-28 flex items-center justify-center bg-black/30">
                                             <img
-                                                src={selectedCertificate.sigilIcon}
+                                                src={shownCertificate?.sigilIcon ?? "/sigil_1.svg"}
                                                 alt="Sigil"
                                                 className="w-20 h-20 object-contain"
                                                 style={{ filter: "brightness(0) saturate(100%) invert(60%) sepia(77%) saturate(3098%) hue-rotate(240deg) brightness(100%) contrast(96%)" }}
@@ -304,23 +330,23 @@ export default function AuditorTaskBay() {
                                     <div className="flex-1 space-y-2">
                                         <p className="font-bold text-[11px] uppercase leading-tight">
                                             <span className="text-white">Name : </span>
-                                            <span className="text-[#a855f7]">{selectedCertificate.taskName}</span>
+                                            <span className="text-[#a855f7]">{shownCertificate?.taskName ?? "-"}</span>
                                         </p>
                                         <p className="font-bold text-[11px] uppercase leading-tight">
                                             <span className="text-white">Score : </span>
-                                            <span className="text-[#a855f7]">{selectedCertificate.score}</span>
+                                            <span className="text-[#a855f7]">{shownCertificate?.score ?? "-"}</span>
                                         </p>
                                         <p className="font-bold text-[11px] uppercase leading-tight">
                                             <span className="text-white">Status : </span>
-                                            <span className="text-[#a855f7]">{selectedCertificate.status}</span>
+                                            <span className={shownCertificate?.status.includes("INFECTED") ? "text-red-400" : "text-[#a855f7]"}>{shownCertificate?.status ?? "-"}</span>
                                         </p>
                                         <p className="font-bold text-[11px] uppercase leading-tight">
                                             <span className="text-white">Author : </span>
-                                            <span className="text-[#a855f7]">{selectedCertificate.author}</span>
+                                            <span className="text-[#a855f7]">{shownCertificate?.author ?? "-"}</span>
                                         </p>
                                         <p className="font-bold text-[11px] uppercase leading-tight">
                                             <span className="text-white">Authority : </span>
-                                            <span className="text-[#a855f7]">{selectedCertificate.authority}</span>
+                                            <span className="text-[#a855f7]">{shownCertificate ? nameOf(shownCertificate.authorityId) : "-"}</span>
                                         </p>
                                     </div>
 
