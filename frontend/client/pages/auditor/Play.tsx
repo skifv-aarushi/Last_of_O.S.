@@ -2,16 +2,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AuditorCharacter from "@/components/AuditorCharacter";
 import HealthBar from "@/components/HealthBar";
-import { useGameState } from "@/hooks/use-game-state";
-import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
-import { refreshToken } from "@/lib/firebase";
+import { useGameGuard, taskBlockedReason } from "@/hooks/use-game-guard";
+import GameBanner from "@/components/GameBanner";
+import { toast } from "sonner";
 
 const mapScene = "/auditor-map.png";
 
 export default function AuditorPlay() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const { authLoading, state } = useGameGuard("auditor");
+  const health = state?.globalHealth ?? 100;
 
   // ─── Zone navigation handlers ───
 
@@ -24,42 +24,6 @@ export default function AuditorPlay() {
   const handleUserInfoEnter = useCallback(() => {
     navigate("/auditor/user-info");
   }, [navigate]);
-
-  // Personal Stats machine
-  const handlePersonalStatsEnter = useCallback(() => {
-    navigate("/auditor/personal-stats");
-  }, [navigate]);
-
-  // Auth guard – redirect to login if not signed in
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setAuthLoading(false);
-      if (!u) navigate("/game");
-    });
-    return unsub;
-  }, [navigate]);
-
-  // Refresh token every 50 minutes (tokens expire in 60 min)
-  useEffect(() => {
-    const interval = setInterval(() => refreshToken(), 50 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Read session from localStorage (set after login/join)
-  const sessionId = localStorage.getItem("sessionId");
-  const { state } = useGameState(sessionId);
-
-  // --- TEST: auto-decrease health every 5 seconds ---
-  const [testHealth, setTestHealth] = useState(1000);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTestHealth((prev) => Math.max(0, prev - 100));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const health = testHealth;
 
   // WASD hint – show briefly then fade
   const [showHint, setShowHint] = useState(true);
@@ -89,14 +53,16 @@ export default function AuditorPlay() {
       <div className="absolute z-30 top-[40px] sm:top-[50px] left-[20px] sm:left-[40px] right-[20px] sm:right-[40px] h-[40px] sm:h-[48px] px-2">
         <HealthBar
           value={health}
-          total={1000}
-          label={`SYSTEM HEALTH ${Math.round((health / 1000) * 100)}%`}
+          total={100}
+          label={`SYSTEM HEALTH ${Math.round(health)}%`}
           className="h-full"
           fillColor="#4667D0"
           emptyColor="#323D30"
           borderColor="#0F2F13"
         />
       </div>
+
+      <GameBanner state={state} accent="#a855f7" />
 
       {/* Game area (full viewport, character + hints) */}
       <div className="relative w-full h-screen">
@@ -105,7 +71,6 @@ export default function AuditorPlay() {
         <AuditorCharacter
           onPortalEnter={handlePortalEnter}
           onUserInfoEnter={handleUserInfoEnter}
-          onPersonalStatsEnter={handlePersonalStatsEnter}
         />
 
         {/* WASD controls hint */}

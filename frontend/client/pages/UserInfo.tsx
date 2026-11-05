@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
+import { auth, onAuthStateChanged, type User } from "@/lib/auth";
 import { getLedger, type LedgerEntry } from "@/lib/api";
 
 interface PlayerStats {
@@ -48,8 +48,8 @@ export default function UserInfo() {
         if (mine.length === 0) return;
 
         const scores = mine.map((e) => e.score);
-        const approved = mine.filter((e) => e.action === "approve").length;
-        const rejected = mine.filter((e) => e.action === "reject").length;
+        const approved = mine.filter((e) => e.action === "approved").length;
+        const rejected = mine.filter((e) => e.action === "rejected").length;
 
         setStats({
           bestScore: Math.max(...scores).toString(),

@@ -2,10 +2,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import CivilianCharacter from "@/components/CivilianCharacter";
 import HealthBar from "@/components/HealthBar";
-import { useGameState } from "@/hooks/use-game-state";
-import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
-import { refreshToken } from "@/lib/firebase";
-import { createSession, joinSession } from "@/lib/api";
+import { useGameGuard, taskBlockedReason } from "@/hooks/use-game-guard";
+import GameBanner from "@/components/GameBanner";
+import { toast } from "sonner";
 
 const labScene = "/lab-scene.png";
 
@@ -13,13 +12,15 @@ const ALL_GAMES = ["/aim-trainer", "/typing-test", "/visual-memory", "/inventory
 
 export default function Play() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const { authLoading, state } = useGameGuard("citizen");
+  const health = state?.globalHealth ?? 100;
 
   // ─── Zone navigation handlers ───
 
   // Task Bay – random game selection with no repeats
   const handlePortalEnter = useCallback(() => {
+    const blocked = taskBlockedReason(state);
+    if (blocked) { toast.error(blocked); return; }
     const playedRaw = localStorage.getItem("playedGames");
     let played: string[] = playedRaw ? JSON.parse(playedRaw) : [];
 
@@ -33,7 +34,7 @@ export default function Play() {
     played.push(chosen);
     localStorage.setItem("playedGames", JSON.stringify(played));
     navigate(chosen);
-  }, [navigate]);
+  }, [navigate, state]);
 
   // User Info machine
   const handleUserInfoEnter = useCallback(() => {
@@ -44,48 +45,6 @@ export default function Play() {
   const handlePersonalStatsEnter = useCallback(() => {
     navigate("/personal-stats");
   }, [navigate]);
-
-  // Auth guard – redirect to login if not signed in
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setAuthLoading(false);
-      if (!u) navigate("/game");
-    });
-    return unsub;
-  }, [navigate]);
-
-  // Refresh token every 50 minutes (tokens expire in 60 min)
-  useEffect(() => {
-    const interval = setInterval(() => refreshToken(), 50 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Read session from localStorage; auto-create if missing (safety net for failed login creation)
-  const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem("sessionId"));
-
-  useEffect(() => {
-    if (sessionId || !user) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        console.log("[Play] No sessionId — creating session...");
-        const { sessionId: newId } = await createSession();
-        localStorage.setItem("sessionId", newId);
-        try { await joinSession(newId); } catch { /* best-effort */ }
-        if (!cancelled) setSessionId(newId);
-        console.log("[Play] Session recovered:", newId);
-      } catch (err) {
-        console.warn("[Play] Session auto-create failed:", err);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [sessionId, user]);
-
-  const { state } = useGameState(sessionId);
-
-  // Use real game state from backend (falls back to 100 if no session)
-  const health = state?.globalHealth ?? 100;
 
   // WASD hint – show briefly then fade
   const [showHint, setShowHint] = useState(true);
@@ -116,10 +75,12 @@ export default function Play() {
         <HealthBar
           value={health}
           total={100}
-          label={`SYSTEM HEALTH ${health}%`}
+          label={`SYSTEM HEALTH ${Math.round(health)}%`}
           className="h-full"
         />
       </div>
+
+      <GameBanner state={state} accent="#6ec4e5" />
 
       {/* Game area (full viewport, character + hints) */}
       <div className="relative w-full h-screen">

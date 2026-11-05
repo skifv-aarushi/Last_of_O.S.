@@ -1,11 +1,12 @@
 /**
  * YANTRA 2026 – API client
- * Talks to the Python Flask backend on Cloud Run.
+ * Talks to the Vercel serverless API (/api).
  */
 
+import { signOut } from "./auth";
+
 const API_BASE =
-  import.meta.env.VITE_API_URL ??
-  "https://yantra-game-server-79752798341.us-central1.run.app";
+  import.meta.env.VITE_API_URL ?? "";
 
 // ---------- helpers ----------
 
@@ -23,6 +24,9 @@ async function request<T>(
       ...(options.headers ?? {}),
     },
   });
+
+  // an expired/invalid session token: drop it so the route guards send the player to login
+  if (res.status === 401 && token) await signOut();
 
   const json = await res.json();
   if (!res.ok) throw new ApiError(json.detail ?? json.error ?? res.statusText, res.status, json);
@@ -60,37 +64,27 @@ export async function registerUser(email: string, displayName: string) {
   });
 }
 
-// ---------- Session ----------
+// ---------- Lobby ----------
 
-export async function createSession() {
-  return request<{ success: boolean; sessionId: string; session: GameSession }>(
-    "/api/session/create",
-    { method: "POST" }
-  );
-}
+export type Role = "citizen" | "attacker" | "authority" | "auditor";
 
-export async function joinSession(sessionId: string) {
-  return request<{ success: boolean; playerCount: number }>(
-    `/api/session/${sessionId}/join`,
-    { method: "POST" }
-  );
-}
-
-export async function startSession(sessionId: string) {
-  return request<{ success: boolean; roles: Record<string, string> }>(
-    `/api/session/${sessionId}/start`,
-    { method: "POST" }
-  );
-}
-
-export async function nextRound(sessionId: string) {
+export async function getLobby() {
   return request<{
     success: boolean;
-    gameOver?: boolean;
-    winner?: string;
-    newRound?: number;
-    roles?: Record<string, string>;
-  }>(`/api/session/${sessionId}/nextRound`, { method: "POST" });
+    sessionId: string | null;
+    status?: "waiting" | "active" | "completed";
+    joined?: boolean;
+    role?: Role | null;
+    totalPlayers?: number;
+    isAdmin: boolean;
+  }>("/api/lobby");
+}
+
+export async function joinLobby() {
+  return request<{ success: boolean; sessionId: string; status: string; role: Role }>(
+    "/api/lobby/join",
+    { method: "POST", body: JSON.stringify({}) }
+  );
 }
 
 // ---------- Game state ----------
@@ -174,7 +168,7 @@ export async function issueCooldown(
   targetPlayerId: string,
   reason: string
 ) {
-  return request<{ success: boolean; cooldownDuration: number }>(
+  return request<{ success: boolean; cooldownDuration: number; cooldownUntil: number; abilityCooldownUntil: number }>(
     `/api/session/${sessionId}/cooldown`,
     {
       method: "POST",
@@ -185,25 +179,25 @@ export async function issueCooldown(
 
 // ---------- Types ----------
 
-export interface GameSession {
-  id: string;
-  status: "waiting" | "active" | "completed";
-  currentRound: number;
-  globalHealth: number;
-  createdAt: number;
-  medianScore: number;
-}
-
 export interface GameState {
   success: boolean;
+  sessionId: string;
   globalHealth: number;
   currentRound: number;
+  totalRounds: number;
   status: "waiting" | "active" | "completed";
   winner?: string;
-  playerRole?: "citizen" | "attacker" | "authority" | "auditor";
+  announcement: string;
+  roundEndsAt: number;
+  joined: boolean;
+  displayName: string;
+  playerRole: Role | null;
   playerTrustScore: number;
   cooldownUntil: number;
+  nextGameAt: number;
+  abilityCooldownUntil: number;
   totalPlayers: number;
+  isAdmin: boolean;
 }
 
 export interface MinigameProblem {
@@ -231,13 +225,16 @@ export interface PendingCertificate {
 
 export interface LeaderboardEntry {
   playerId: string;
+  name: string;
   trustScore: number;
-  role: string;
+  role: string | null;
+  cooldownUntil: number;
 }
 
 export interface LedgerEntry {
   certificateId: string;
   playerId: string;
+  playerName?: string;
   authorityId: string;
   action: string;
   score: number;
@@ -245,3 +242,48 @@ export interface LedgerEntry {
   healthChange: number;
   timestamp: number;
 }
+
+// ---------- Admin ----------
+
+export interface AdminOverview {
+  success: boolean;
+  session: null | {
+    id: string; status: "waiting" | "active" | "completed"; currentRound: number; totalRounds: number;
+    globalHealth: number; winner: string | null; announcement: string; roundDurationMs: number;
+    roundEndsAt: number; createdAt: number;
+  };
+  roleCounts: Record<string, number>;
+  certificates: Record<string, { count: number; avg: number }>;
+  players: { id: string; name: string; email: string; role: Role; trust: number; cooldownUntil: number; tasks: number }[];
+  events: { id: string; ts: number; kind: string; actor: string | null; target: string | null; detail: string | null }[];
+  sessions: { id: string; status: string; winner: string | null; createdAt: number; round: number }[];
+}
+
+const post = (path: string, body: unknown = {}) =>
+  request<{ success: boolean }>(`/api/admin${path}`, { method: "POST", body: JSON.stringify(body) });
+
+export const admin = {
+  overview: () => request<AdminOverview>("/api/admin/overview"),
+  newSession: (opts: { totalRounds?: number; roundMinutes?: number } = {}) => post("/session/new", opts),
+  start: (force = false) => post("/session/start", { force }),
+  nextRound: () => post("/session/next-round"),
+  end: (winner: "citizen" | "attacker" | null = null) => post("/session/end", { winner }),
+  setHealth: (value: number) => post("/session/health", { value }),
+  announce: (message: string) => post("/session/announce", { message }),
+  config: (cfg: { totalRounds?: number; roundMinutes?: number }) => post("/session/config", cfg),
+  updatePlayer: (id: string, patch: { role?: Role; cooldownSeconds?: number; trustScore?: number }) =>
+    post(`/player/${encodeURIComponent(id)}`, patch),
+  kick: (id: string) =>
+    request<{ success: boolean }>(`/api/admin/player/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  async downloadCsv(sessionId: string) {
+    const token = localStorage.getItem("authToken");
+    const res = await fetch(`${API_BASE}/api/admin/results.csv?session=${sessionId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Export failed");
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url; a.download = `results-${sessionId}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  },
+};

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, onAuthStateChanged, type User } from "@/lib/firebase";
+import { auth, onAuthStateChanged, type User } from "@/lib/auth";
 import { getLedger, type LedgerEntry } from "@/lib/api";
 
 // Map game routes → display names + sigil icons
@@ -113,7 +113,7 @@ export default function AuthorityPersonalStats() {
             return {
               ...d,
               score: data.score,
-              status: data.action === "approve" ? "Approved" : data.action === "reject" ? "Rejected" : "Pending",
+              status: data.action === "approved" ? "Approved" : data.action === "rejected" ? "Rejected" : "Pending",
             };
           }
           return d;

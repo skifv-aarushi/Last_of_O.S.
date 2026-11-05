@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { getLeaderboard, getLedger, issueCooldown, type LeaderboardEntry, type LedgerEntry } from "@/lib/api";
 
 interface Citizen {
     id: number;
+    playerId: string;
     name: string; // Formatted as Name[Role]
     role: "CITIZEN" | "AUTHORITY" | "ATTACKER" | "AUDITOR"; // Added role field
     totalTasks: number;
@@ -41,23 +43,27 @@ export default function AuditorTaskBay() {
     // Sample data for citizens/authorities (left panel)
     const [citizens, setCitizens] = useState<Citizen[]>([]);
 
-    useEffect(() => {
+    const loadPlayers = () => {
         const sessionId = localStorage.getItem("sessionId");
         if (!sessionId) return;
         getLeaderboard(sessionId).then(({ leaderboard }) => {
             setCitizens(leaderboard.map((p: LeaderboardEntry, i: number) => {
                 const role = (p.role?.toUpperCase() ?? "CITIZEN") as Citizen["role"];
+                const onCooldown = p.cooldownUntil > Date.now();
                 return {
                     id: i + 1,
-                    name: p.playerId,
+                    playerId: p.playerId,
+                    name: p.name,
                     role,
                     totalTasks: p.trustScore,
                     icon: ROLE_SPRITES[role] || "/citizen-sprite.png",
-                    onCooldown: false,
+                    onCooldown,
+                    cooldownUntil: onCooldown ? p.cooldownUntil : undefined,
                 };
             }));
         }).catch(console.error);
-    }, []);
+    };
+    useEffect(() => { loadPlayers(); }, []);
 
     // Certificates / ledger entries for the session
     const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -69,8 +75,8 @@ export default function AuditorTaskBay() {
                 id: i + 1,
                 taskName: e.action,
                 score: e.score,
-                status: e.wasInfected ? "Infected" : "Approved",
-                author: e.playerId,
+                status: e.action === "rejected" ? "Rejected" : e.wasInfected ? "Infected" : "Approved",
+                author: e.playerName ?? e.playerId,
                 authority: e.authorityId,
                 sigilIcon: `/sigil_${(i % 5) + 1}.svg`,
             })));
@@ -98,30 +104,15 @@ export default function AuditorTaskBay() {
         if (!selectedCitizen || selectedCitizen.role !== "AUTHORITY") return;
 
         const sessionId = localStorage.getItem("sessionId");
-        let cooldownMs = 5 * 60 * 1000; // default 5 min
-        if (sessionId) {
-            try {
-                const res = await issueCooldown(sessionId, selectedCitizen.name, "Suspicious activity");
-                cooldownMs = (res.cooldownDuration ?? 300) * 1000;
-            } catch (err) { console.error("Cooldown failed", err); }
+        if (!sessionId) return;
+        try {
+            await issueCooldown(sessionId, selectedCitizen.playerId, "Suspicious activity");
+            toast.success(`${selectedCitizen.name} is on cooldown`);
+        } catch (err: any) {
+            toast.error(err.message ?? "Cooldown failed");
         }
-
-        const cooldownTime = Date.now() + cooldownMs;
-        setCitizens(citizens.map(citizen =>
-            citizen.id === selectedCitizen.id
-                ? { ...citizen, onCooldown: true, cooldownUntil: cooldownTime }
-                : citizen
-        ));
         setShowConfirmation(false);
-
-        // Auto-remove cooldown after duration
-        setTimeout(() => {
-            setCitizens(prev => prev.map(citizen =>
-                citizen.id === selectedCitizen.id
-                    ? { ...citizen, onCooldown: false, cooldownUntil: undefined }
-                    : citizen
-            ));
-        }, cooldownMs);
+        loadPlayers();
     };
 
     const handleCancelCooldown = () => {

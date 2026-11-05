@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm typecheck
+      - name: API tests (local SQLite)
+        run: pnpm db:migrate && pnpm test:api
+        env:
+          TURSO_DATABASE_URL: file:local.db
+          SESSION_SECRET: ci-secret-ci-secret-ci-secret-32
+          GOOGLE_CLIENT_ID: ci
+          ADMIN_EMAILS: u1@vitstudent.ac.in
+      - run: pnpm build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}

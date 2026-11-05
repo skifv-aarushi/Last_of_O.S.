@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { getPendingCertificates, processCertificate, type PendingCertificate } from "@/lib/api";
 
 interface SigilTask {
@@ -15,6 +16,7 @@ export default function Authority() {
 
   const [tasks, setTasks] = useState<SigilTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // Fetch pending certificates from backend
   const fetchCerts = async () => {
@@ -33,10 +35,15 @@ export default function Authority() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchCerts(); }, []);
+  // Keep the queue fresh while no decision is being confirmed
+  useEffect(() => {
+    if (showConfirmation) return;
+    fetchCerts();
+    const t = setInterval(fetchCerts, 5000);
+    return () => clearInterval(t);
+  }, [showConfirmation]);
 
   const [selectedTask, setSelectedTask] = useState<SigilTask | null>(tasks[0] ?? null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [decision, setDecision] = useState<"approved" | "rejected" | null>(null);
 
   // Auto-select first task when tasks load
@@ -50,7 +57,11 @@ export default function Authority() {
     if (sessionId) {
       try {
         await processCertificate(sessionId, selectedTask.id, "approve", selectedTask.score);
-      } catch (err) { console.error("Approve failed", err); }
+      } catch (err: any) {
+        toast.error(err.message ?? "Could not process this certificate");
+        fetchCerts();
+        return;
+      }
     }
     setTasks(tasks.map(task =>
       task.id === selectedTask.id ? { ...task, status: "approved" } : task
@@ -65,7 +76,11 @@ export default function Authority() {
     if (sessionId) {
       try {
         await processCertificate(sessionId, selectedTask.id, "reject", selectedTask.score);
-      } catch (err) { console.error("Reject failed", err); }
+      } catch (err: any) {
+        toast.error(err.message ?? "Could not process this certificate");
+        fetchCerts();
+        return;
+      }
     }
     setTasks(tasks.map(task =>
       task.id === selectedTask.id ? { ...task, status: "rejected" } : task

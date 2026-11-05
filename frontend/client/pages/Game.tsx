@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithGoogle, auth, onAuthStateChanged } from "@/lib/firebase";
-import { registerUser, createSession, joinSession } from "@/lib/api";
+import { signInWithGoogle, auth, onAuthStateChanged } from "@/lib/auth";
+import { joinLobby } from "@/lib/api";
 
 export default function Game() {
   const navigate = useNavigate();
@@ -9,11 +9,11 @@ export default function Game() {
   const [error, setError] = useState<string | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
 
-  // Redirect already-authenticated users to /play
+  // Already signed in -> straight to the lobby, which routes by game status and role
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user && !loading) {
-        navigate("/play", { replace: true });
+        navigate("/lobby", { replace: true });
       }
       setAuthChecking(false);
     });
@@ -24,45 +24,19 @@ export default function Game() {
     setLoading(true);
     setError(null);
     try {
-      console.log("[Login] Starting Google sign-in...");
-      const user = await signInWithGoogle();
-      console.log("[Login] Google sign-in OK:", user.email);
-
-      // Register user in backend Firestore (idempotent — works for new & returning users)
-      try {
-        console.log("[Login] Registering user...");
-        const regResult = await registerUser(user.email ?? "", user.displayName ?? "Player");
-        console.log("[Login] Register result:", regResult);
-      } catch (regErr: any) {
-        console.warn("[Login] Register failed (non-critical):", regErr);
-      }
-
-      // Create a game session, join it, and persist sessionId
-      try {
-        console.log("[Login] Creating session...");
-        const { sessionId } = await createSession();
-        console.log("[Login] Session created:", sessionId);
-        localStorage.setItem("sessionId", sessionId);
-
-        // Join the session so the player is registered as a participant
-        try {
-          await joinSession(sessionId);
-          console.log("[Login] Joined session:", sessionId);
-        } catch (joinErr: any) {
-          console.warn("[Login] Join session failed (non-critical):", joinErr);
-        }
-      } catch (sessErr: any) {
-        console.warn("[Login] Session creation failed (non-critical):", sessErr);
-      }
-
-      navigate("/play", { replace: true });
+      await signInWithGoogle();
+      // Everyone shares one open game; join it (or start a fresh lobby if none exists)
+      const { sessionId } = await joinLobby();
+      localStorage.setItem("sessionId", sessionId);
+      navigate("/lobby", { replace: true });
     } catch (err: any) {
-      console.error("[Login] Failed at step:", err);
+      console.error("[Login] failed:", err);
       setError(err.message ?? "Login failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
+
 
   // Show loading while checking initial auth state
   if (authChecking) {

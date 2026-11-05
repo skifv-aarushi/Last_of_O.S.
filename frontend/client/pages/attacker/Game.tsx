@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithGoogle } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/auth";
 
 export default function Game() {
   const navigate = useNavigate();

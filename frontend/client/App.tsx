@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Game from "./pages/Game";
 import Play from "./pages/Play";
@@ -21,7 +21,6 @@ import AuthorityPlay from "./pages/authority/Play";
 import AuthorityUserInfo from "./pages/authority/UserInfo";
 import AuthorityPersonalStats from "./pages/authority/PersonalStats";
 import AuditorGame, { Play as AuditorPlay, UserInfo as AuditorUserInfo } from "./pages/auditor";
-import AttackerIndex from "./pages/attacker/Index";
 import AttackerPlay from "./pages/attacker/Play";
 import AttackerAimTrainer from "./pages/attacker/AimTrainer";
 import AttackerTypingTest from "./pages/attacker/TypingTest";
@@ -31,6 +30,9 @@ import AttackerPIDTuning from "./pages/attacker/PIDTuning";
 import AttackerUserInfo from "./pages/attacker/UserInfo";
 import AttackerPersonalStats from "./pages/attacker/PersonalStats";
 import NotFound from "./pages/NotFound";
+import Lobby from "./pages/Lobby";
+import Results from "./pages/Results";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +45,9 @@ export const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/game" element={<Game />} />
+          <Route path="/lobby" element={<Lobby />} />
+          <Route path="/results" element={<Results />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/play" element={<Play />} />
           <Route path="/aim-trainer" element={<AimTrainer />} />
           <Route path="/typing-test" element={<TypingTest />} />
@@ -59,7 +64,7 @@ export const App = () => (
           <Route path="/auditor/play" element={<AuditorPlay />} />
           <Route path="/auditor/game" element={<AuditorGame />} />
           <Route path="/auditor/user-info" element={<AuditorUserInfo />} />
-          <Route path="/attacker" element={<AttackerIndex />} />
+          <Route path="/attacker" element={<Navigate to="/game" replace />} />
           <Route path="/attacker/play" element={<AttackerPlay />} />
           <Route path="/attacker/aim-trainer" element={<AttackerAimTrainer />} />
           <Route path="/attacker/typing-test" element={<AttackerTypingTest />} />
