@@ -27,6 +27,7 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --no-frozen-lockfile
 
+      # Vercel CLI runs from the repo root because the project Root Directory is "frontend"
       - name: Apply database schema
         run: pnpm db:migrate
         env:
@@ -34,5 +35,8 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
       - run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: .
       - run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: .
       - run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: .
