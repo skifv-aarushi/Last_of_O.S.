@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithGoogle, auth, onAuthStateChanged } from "@/lib/auth";
+import { requestLoginCode, verifyLoginCode, auth, onAuthStateChanged } from "@/lib/auth";
 import { joinLobby } from "@/lib/api";
 
 export default function Game() {
@@ -20,23 +20,41 @@ export default function Game() {
     return unsub;
   }, [navigate, loading]);
 
-  const handleGoogleLogin = async () => {
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+
+  const handleSendCode = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      await signInWithGoogle();
-      // Everyone shares one open game; join it (or start a fresh lobby if none exists)
-      const { sessionId } = await joinLobby();
-      localStorage.setItem("sessionId", sessionId);
-      navigate("/lobby", { replace: true });
+      await requestLoginCode(email.trim().toLowerCase());
+      setCodeSent(true);
+      setCode("");
     } catch (err: any) {
-      console.error("[Login] failed:", err);
-      setError(err.message ?? "Login failed. Try again.");
+      setError(err.message ?? "Could not send the code.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await verifyLoginCode(email.trim().toLowerCase(), code.trim());
+      // Everyone shares one open game; join it (or start a fresh lobby if none exists)
+      const { sessionId } = await joinLobby();
+      localStorage.setItem("sessionId", sessionId);
+      navigate("/lobby", { replace: true });
+    } catch (err: any) {
+      setError(err.message ?? "Login failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Show loading while checking initial auth state
   if (authChecking) {
@@ -74,14 +92,57 @@ export default function Game() {
             LOGIN
           </h2>
 
-          {/* Google Login Button */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "SIGNING IN..." : "LOGIN WITH\nGOOGLE"}
-          </button>
+          {!codeSent ? (
+            <form onSubmit={handleSendCode} className="space-y-3">
+              <input
+                type="email"
+                required
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@vitstudent.ac.in"
+                className="w-full py-2 px-3 bg-black/50 border-2 border-pixel-cyan/60 text-white font-pixel text-xs outline-none focus:border-pixel-cyan"
+              />
+              <button
+                type="submit"
+                disabled={loading || !email}
+                className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "SENDING..." : "EMAIL ME A CODE"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerify} className="space-y-3">
+              <p className="font-pixel text-[10px] text-gray-300 text-center">
+                CODE SENT TO {email.toUpperCase()}
+              </p>
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="000000"
+                className="w-full py-2 px-3 bg-black/50 border-2 border-pixel-cyan/60 text-white text-center tracking-[0.5em] font-pixel text-lg outline-none focus:border-pixel-cyan"
+              />
+              <button
+                type="submit"
+                disabled={loading || code.length !== 6}
+                className="w-full py-2 sm:py-3 px-3 sm:px-4 bg-transparent border-2 border-pixel-cyan text-pixel-cyan font-pixel text-xs sm:text-sm hover:bg-pixel-cyan/20 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "CHECKING..." : "ENTER"}
+              </button>
+              <div className="flex justify-between font-pixel text-[10px] text-pixel-cyan">
+                <button type="button" onClick={() => { setCodeSent(false); setError(null); }} className="underline">
+                  CHANGE EMAIL
+                </button>
+                <button type="button" onClick={() => handleSendCode()} disabled={loading} className="underline">
+                  RESEND CODE
+                </button>
+              </div>
+            </form>
+          )}
 
           {error && (
             <p className="mt-3 font-pixel text-[10px] sm:text-xs text-red-400 text-center">

@@ -1,11 +1,9 @@
 /**
- * Google sign-in restricted to @vitstudent.ac.in.
- * The Google access token is exchanged on the backend for a short-lived session token.
+ * Email-code sign-in restricted to @vitstudent.ac.in.
+ * A one-time code is emailed to the student, then exchanged on the backend for a session token.
  */
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
-const ALLOWED_DOMAIN = "vitstudent.ac.in";
 
 export interface User {
   uid: string;
@@ -42,36 +40,25 @@ export function onAuthStateChanged(_auth: typeof auth, cb: Listener) {
   };
 }
 
-function getAccessToken(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const google = (window as any).google;
-    if (!google?.accounts?.oauth2) {
-      reject(new Error("Google sign-in failed to load. Check your connection and retry."));
-      return;
-    }
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile",
-      hd: ALLOWED_DOMAIN,
-      callback: (resp: any) =>
-        resp.error ? reject(new Error(resp.error_description ?? resp.error)) : resolve(resp.access_token),
-      error_callback: (err: any) => reject(new Error(err?.message ?? "Sign-in was cancelled.")),
-    });
-    client.requestAccessToken({ prompt: "select_account" });
-  });
-}
-
-/** Sign in with Google popup. Only allows @vitstudent.ac.in emails. */
-export async function signInWithGoogle(): Promise<User> {
-  const accessToken = await getAccessToken();
-  const res = await fetch(`${API_BASE}/api/auth/google`, {
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ accessToken }),
+    body: JSON.stringify(body),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? "Sign-in failed");
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error ?? "Something went wrong. Try again.");
+  return json as T;
+}
 
+/** Step 1: email a 6-digit code to a @vitstudent.ac.in address. */
+export async function requestLoginCode(email: string): Promise<void> {
+  await post("/api/auth/request-code", { email });
+}
+
+/** Step 2: exchange the emailed code for a session. */
+export async function verifyLoginCode(email: string, code: string): Promise<User> {
+  const json = await post<{ token: string; user: User }>("/api/auth/verify-code", { email, code });
   localStorage.setItem("authToken", json.token);
   localStorage.setItem("authUser", JSON.stringify(json.user));
   localStorage.setItem("playerName", json.user.displayName ?? "Player");

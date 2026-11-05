@@ -28,8 +28,6 @@ jobs:
         env:
           TURSO_DATABASE_URL: file:local.db
           SESSION_SECRET: ci-secret-ci-secret-ci-secret-32
-          GOOGLE_CLIENT_ID: ci
+          MAIL_MODE: memory
           ADMIN_EMAILS: u1@vitstudent.ac.in
       - run: pnpm build
-        env:
-          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}

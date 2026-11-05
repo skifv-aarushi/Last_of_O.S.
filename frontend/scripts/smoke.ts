@@ -1,6 +1,7 @@
 import { createApi } from "../api/_app.ts";
 import { signSession } from "../api/_lib/auth.ts";
 import { db } from "../api/_lib/db.ts";
+import { outbox } from "../api/_lib/mail.ts";
 
 const srv = createApi().listen(0);
 const base = `http://localhost:${(srv.address() as any).port}`;
@@ -10,6 +11,24 @@ const call = async (tok: string, m: string, p: string, b?: any) => {
 };
 let fails = 0;
 const ok = (name: string, cond: boolean, extra?: any) => { if (!cond) fails++; console.log(cond ? "PASS" : "FAIL", name, cond ? "" : JSON.stringify(extra)); };
+
+// ---- email-code login ----
+const rc = (email: string) => call("", "POST", "/api/auth/request-code", { email });
+ok("non-VIT email rejected", (await rc("someone@gmail.com")).s === 400);
+ok("lookalike domain rejected", (await rc("x@vitstudent.ac.in.evil.com")).s === 400);
+ok("code requested", (await rc("Test.User2024@vitstudent.ac.in")).s === 200 && outbox.length === 1);
+ok("resend throttled", (await rc("test.user2024@vitstudent.ac.in")).s === 429);
+const good = outbox[0].code, bad = good === "000000" ? "111111" : "000000";
+ok("wrong code rejected", (await call("", "POST", "/api/auth/verify-code", { email: "test.user2024@vitstudent.ac.in", code: bad })).s === 401);
+const login = await call("", "POST", "/api/auth/verify-code", { email: "test.user2024@vitstudent.ac.in", code: good });
+ok("correct code logs in, name derived", login.s === 200 && login.j.user.displayName === "Test User" && !!login.j.token, login);
+ok("session token works", (await call(login.j.token, "GET", "/api/lobby")).s === 200);
+ok("code is single-use", (await call("", "POST", "/api/auth/verify-code", { email: "test.user2024@vitstudent.ac.in", code: good })).s === 401);
+await db.execute("DELETE FROM login_codes");
+await rc("brute@vitstudent.ac.in");
+for (let i = 0; i < 5; i++) await call("", "POST", "/api/auth/verify-code", { email: "brute@vitstudent.ac.in", code: outbox[outbox.length - 1].code === "123456" ? "654321" : "123456" });
+ok("locked out after 5 wrong attempts", (await call("", "POST", "/api/auth/verify-code", { email: "brute@vitstudent.ac.in", code: outbox[outbox.length - 1].code })).s === 429);
+ok("no token = 401", (await call("", "GET", "/api/lobby")).s === 401);
 
 const ids = ["u1", "u2", "u3", "u4", "u5", "u6"];
 const T: Record<string, string> = {};

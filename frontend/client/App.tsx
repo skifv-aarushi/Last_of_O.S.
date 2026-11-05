@@ -15,7 +15,6 @@ import InventoryManagement from "./pages/InventoryManagement";
 import PIDTuning from "./pages/PIDTuning";
 import UserInfo from "./pages/UserInfo";
 import PersonalStats from "./pages/PersonalStats";
-import Signup from "./pages/Signup";
 import AuthorityGame from "./pages/authority";
 import AuthorityPlay from "./pages/authority/Play";
 import AuthorityUserInfo from "./pages/authority/UserInfo";
@@ -56,7 +55,7 @@ export const App = () => (
           <Route path="/pid-tuning" element={<PIDTuning />} />
           <Route path="/user-info" element={<UserInfo />} />
           <Route path="/personal-stats" element={<PersonalStats />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/signup" element={<Navigate to="/game" replace />} />
           <Route path="/authority/play" element={<AuthorityPlay />} />
           <Route path="/authority/game" element={<AuthorityGame />} />
           <Route path="/authority/user-info" element={<AuthorityUserInfo />} />

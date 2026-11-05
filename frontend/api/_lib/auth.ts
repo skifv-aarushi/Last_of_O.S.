@@ -1,8 +1,8 @@
 import { RequestHandler } from "express";
+import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { isAdminEmail } from "./game.js";
 
-const ALLOWED_DOMAIN = "vitstudent.ac.in";
 const SESSION_TTL = "12h";
 
 const secret = () => new TextEncoder().encode(process.env.SESSION_SECRET ?? "");
@@ -15,36 +15,35 @@ declare global {
   }
 }
 
-export interface GoogleProfile {
-  uid: string;
-  email: string;
-  name: string;
+/** Stable player id derived from the email, so the same student is always the same player. */
+export const uidForEmail = (email: string) =>
+  "u" + createHash("sha256").update(email).digest("hex").slice(0, 19);
+
+export const isVitEmail = (email: string) =>
+  /^[a-z0-9._+-]+@vitstudent\.ac\.in$/.test(email);
+
+/** "aarav.sharma2023@vitstudent.ac.in" -> "Aarav Sharma" */
+export function nameFromEmail(email: string) {
+  const local = email.split("@")[0].replace(/[0-9]+/g, " ").replace(/[._+-]+/g, " ").trim();
+  return local.split(/\s+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ") || "Player";
 }
 
-/**
- * Validates a Google OAuth access token: it must have been issued to OUR client id
- * and belong to a verified @vitstudent.ac.in account.
- */
-export async function verifyGoogleAccessToken(accessToken: string): Promise<GoogleProfile> {
-  const infoRes = await fetch(
-    `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
-  );
-  if (!infoRes.ok) throw new Error("Invalid Google token");
-  const info = await infoRes.json();
-  if (info.aud !== process.env.GOOGLE_CLIENT_ID) throw new Error("Token was not issued for this app");
+const codeHash = (email: string, code: string) =>
+  createHmac("sha256", process.env.SESSION_SECRET ?? "").update(`${email}:${code}`).digest("hex");
 
-  const profRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!profRes.ok) throw new Error("Could not read Google profile");
-  const p = await profRes.json();
+export const CODE_TTL_MS = 10 * 60 * 1000;
+export const RESEND_AFTER_MS = 60 * 1000;
+export const MAX_ATTEMPTS = 5;
 
-  const email: string = (p.email ?? "").toLowerCase();
-  if (!p.email_verified || !email.endsWith(`@${ALLOWED_DOMAIN}`) || p.hd !== ALLOWED_DOMAIN) {
-    throw new Error(`Only VIT student emails (@${ALLOWED_DOMAIN}) are allowed.`);
-  }
-  return { uid: p.sub, email, name: p.name ?? "Player" };
-}
+export const newLoginCode = () => {
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  return { code };
+};
+export const hashLoginCode = codeHash;
+export const codesMatch = (email: string, code: string, storedHash: string) => {
+  const a = Buffer.from(codeHash(email, code), "hex"), b = Buffer.from(storedHash, "hex");
+  return a.length === b.length && timingSafeEqual(a, b);
+};
 
 export const signSession = (uid: string, email: string) =>
   new SignJWT({ email })
